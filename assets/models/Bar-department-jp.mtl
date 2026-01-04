@@ -1,0 +1,77 @@
+# Blender 5.0.1 MTL File: 'None'
+# www.blender.org
+
+newmtl FIVE.001
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd C:/FIVE_baseColor.png
+map_Ke C:/FIVE_emissive.png
+
+newmtl FOUR.001
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd C:/FOUR_baseColor.png
+map_Bump -bm 1.000000 C:/FOUR_normal.png
+
+newmtl SEVEN.001
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd C:/SEVEN_baseColor.png
+map_Bump -bm 1.000000 C:/SEVEN_normal.png
+
+newmtl THREE.001
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd C:/THREE_baseColor.png
+map_Bump -bm 1.000000 C:/THREE_normal.png
+
+newmtl material.001
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd C:/material_baseColor.png
+map_Bump -bm 1.000000 C:/material_normal.png
+
+newmtl material_1.001
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd C:/material_1_baseColor.png
+map_Bump -bm 1.000000 C:/material_1_normal.png
+
+newmtl material_5.001
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd C:/material_5_baseColor.png

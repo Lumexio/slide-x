@@ -1,0 +1,172 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=4
+
+_global_script_classes=[ {
+"base": "Reference",
+"class": "TOD_ATM_LIB",
+"language": "GDScript",
+"path": "res://addons/time-of-day/src/sky/material/common/tod_atm_lib.gd"
+}, {
+"base": "DirectionalLight",
+"class": "TOD_Celestial",
+"language": "GDScript",
+"path": "res://addons/time-of-day/src/sky/celestials/tod_celestial.gd"
+}, {
+"base": "Reference",
+"class": "TOD_CelestialsConst",
+"language": "GDScript",
+"path": "res://addons/time-of-day/src/sky/celestials/tod_celestials_const.gd"
+}, {
+"base": "Reference",
+"class": "TOD_DateTimeUtil",
+"language": "GDScript",
+"path": "res://addons/time-of-day/src/time-of-day/tod_date_time_util.gd"
+}, {
+"base": "Node",
+"class": "TOD_Manager",
+"language": "GDScript",
+"path": "res://addons/time-of-day/src/time-of-day/tod_manager.gd"
+}, {
+"base": "Reference",
+"class": "TOD_Math",
+"language": "GDScript",
+"path": "res://addons/time-of-day/src/common/tod_math.gd"
+}, {
+"base": "DirectionalLight",
+"class": "TOD_Moon",
+"language": "GDScript",
+"path": "res://addons/time-of-day/src/sky/celestials/tod_moon.gd"
+}, {
+"base": "Reference",
+"class": "TOD_OrbitalElements",
+"language": "GDScript",
+"path": "res://addons/time-of-day/src/time-of-day/tod_orbital_elements.gd"
+}, {
+"base": "Node",
+"class": "TOD_Sky",
+"language": "GDScript",
+"path": "res://addons/time-of-day/src/sky/tod_sky.gd"
+}, {
+"base": "Resource",
+"class": "TOD_SkyMaterialBase",
+"language": "GDScript",
+"path": "res://addons/time-of-day/src/sky/material/common/tod_sky_material_base.gd"
+}, {
+"base": "TOD_SkyMaterialBase",
+"class": "TOD_StandardMaterial",
+"language": "GDScript",
+"path": "res://addons/time-of-day/src/sky/material/standard/tod_standard_material.gd"
+}, {
+"base": "TOD_Celestial",
+"class": "TOD_Sun",
+"language": "GDScript",
+"path": "res://addons/time-of-day/src/sky/celestials/tod_sun.gd"
+}, {
+"base": "Reference",
+"class": "TOD_Util",
+"language": "GDScript",
+"path": "res://addons/time-of-day/src/common/tod_util.gd"
+} ]
+_global_script_class_icons={
+"TOD_ATM_LIB": "",
+"TOD_Celestial": "",
+"TOD_CelestialsConst": "",
+"TOD_DateTimeUtil": "",
+"TOD_Manager": "",
+"TOD_Math": "",
+"TOD_Moon": "",
+"TOD_OrbitalElements": "",
+"TOD_Sky": "",
+"TOD_SkyMaterialBase": "",
+"TOD_StandardMaterial": "",
+"TOD_Sun": "",
+"TOD_Util": ""
+}
+
+[application]
+
+config/name="slide-x"
+run/main_scene="res://scenes/main.tscn"
+config/icon="res://icon.png"
+
+[autoload]
+
+GlobalCelestials="*res://addons/time-of-day/src/sky/celestials/tod_global_celestials.gd"
+
+[editor_plugins]
+
+enabled=PoolStringArray( "res://addons/time-of-day/plugin.cfg" )
+
+[gui]
+
+common/drop_mouse_on_gui_input_disabled=true
+
+[input]
+
+ui_left={
+"deadzone": 0.5,
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":65,"physical_scancode":0,"unicode":0,"echo":false,"script":null)
+, Object(InputEventJoypadButton,"resource_local_to_scene":false,"resource_name":"","device":0,"button_index":14,"pressure":0.0,"pressed":false,"script":null)
+ ]
+}
+ui_right={
+"deadzone": 0.5,
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":68,"physical_scancode":0,"unicode":0,"echo":false,"script":null)
+, Object(InputEventJoypadButton,"resource_local_to_scene":false,"resource_name":"","device":0,"button_index":15,"pressure":0.0,"pressed":false,"script":null)
+ ]
+}
+ui_up={
+"deadzone": 0.5,
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":87,"physical_scancode":0,"unicode":0,"echo":false,"script":null)
+, Object(InputEventJoypadButton,"resource_local_to_scene":false,"resource_name":"","device":0,"button_index":12,"pressure":0.0,"pressed":false,"script":null)
+ ]
+}
+ui_down={
+"deadzone": 0.5,
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":83,"physical_scancode":0,"unicode":0,"echo":false,"script":null)
+, Object(InputEventJoypadButton,"resource_local_to_scene":false,"resource_name":"","device":0,"button_index":13,"pressure":0.0,"pressed":false,"script":null)
+ ]
+}
+run={
+"deadzone": 0.5,
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":16777237,"physical_scancode":0,"unicode":0,"echo":false,"script":null)
+ ]
+}
+kick={
+"deadzone": 0.5,
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":0,"physical_scancode":79,"unicode":0,"echo":false,"script":null)
+ ]
+}
+punch={
+"deadzone": 0.5,
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":0,"physical_scancode":73,"unicode":0,"echo":false,"script":null)
+ ]
+}
+elbow={
+"deadzone": 0.5,
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":0,"physical_scancode":80,"unicode":0,"echo":false,"script":null)
+ ]
+}
+jump={
+"deadzone": 0.5,
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":0,"physical_scancode":32,"unicode":0,"echo":false,"script":null)
+ ]
+}
+
+[physics]
+
+common/enable_pause_aware_picking=true
+
+[rendering]
+
+quality/driver/driver_name="GLES2"
+quality/driver/fallback_to_gles2=true
+vram_compression/import_etc=true
+environment/default_environment="res://default_env.tres"

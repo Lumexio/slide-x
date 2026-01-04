@@ -1,0 +1,11 @@
+Model Information:
+* title:	Cyberpunk Building
+* source:	https://sketchfab.com/3d-models/cyberpunk-building-e79154e588bd4a6c84fa07e9a53f3ff9
+* author:	igor.tesV (https://sketchfab.com/igor.tesV)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Cyberpunk Building" (https://sketchfab.com/3d-models/cyberpunk-building-e79154e588bd4a6c84fa07e9a53f3ff9) by igor.tesV (https://sketchfab.com/igor.tesV) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
