@@ -23,17 +23,21 @@ This project now includes a modular state-machine-based character controller por
 
 ### Getting Started
 
-The state machine requires manual integration into the existing player scene. See the complete integration guide:
+The third-person character controller has been fully ported with all scripts and documentation. For complete information:
 
-📖 **[State Machine Integration Guide](docs/STATE_MACHINE_INTEGRATION.md)**
+📖 **[Third-Person Controller Documentation](docs/third_person_controller.md)** - Main reference guide
 
-The guide includes:
-- Architecture overview and component description
-- Step-by-step scene setup instructions
-- Animation mapping
-- Input configuration
-- Troubleshooting tips
-- Combat system integration notes
+The documentation covers:
+- Complete architecture overview and component descriptions
+- How to tweak movement and camera behavior
+- Animation mapping to melee-guy model
+- Input configuration reference
+- Extending the system with new states
+- Troubleshooting common issues
+
+⚙️ **[Manual Integration Guide](docs/STATE_MACHINE_INTEGRATION.md)** - Scene setup instructions
+
+Note: The player scene requires manual setup in the Godot editor to integrate the AnimationTree and state machine hierarchy. Follow the integration guide for step-by-step instructions.
 
 ### Controls
 

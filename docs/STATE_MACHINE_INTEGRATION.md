@@ -1,72 +1,41 @@
 # State Machine Integration Guide for slide-x
 
-This document explains the new third-person character controller architecture imported from the 3d-character-testing project.
+> **Note**: This document has been superseded by the comprehensive [Third-Person Controller Guide](third_person_controller.md).  
+> Please refer to that document for complete documentation on architecture, usage, and customization.
 
-## Architecture Overview
+This document provides step-by-step instructions for manually integrating the state machine into the existing player scene.
 
-The new player controller uses a state-machine-based approach with the following components:
+## Quick Reference
 
-### Core Components
+For detailed information on:
+- **Architecture overview** → See [third_person_controller.md](third_person_controller.md#architecture-overview)
+- **Tweaking movement/camera** → See [third_person_controller.md](third_person_controller.md#tweaking-movement-behavior)
+- **Animation mapping** → See [third_person_controller.md](third_person_controller.md#animation-mapping)
+- **Extending the system** → See [third_person_controller.md](third_person_controller.md#extending-the-system)
 
-1. **State Machine Core** (`src/Main/StateMachine/`)
-   - `State.gd`: Base state class for hierarchical state machines
-   - `StateMachine.gd`: Manages state transitions and delegates engine callbacks
+## Manual Integration Overview
 
-2. **Player Controller** (`src/Player/`)
-   - `Player.gd`: Main player script (KinematicBody with `class_name Player`)
-   - `PlayerState.gd`: Base class for all player-specific states
-   - `Mannequiny.gd`: Animation controller that manages AnimationTree transitions
+The third-person character controller has been ported with all scripts and assets in place. However, **manual scene setup in the Godot editor is required** because:
 
-3. **Player States** (`src/Player/States/`)
-   - `Move.gd`: Parent state handling movement physics and camera-relative controls
-   - `Idle.gd`: Idle state when no input is detected
-   - `Run.gd`: Running/walking state with movement
-   - `Air.gd`: Jump and fall state
+1. slide-x uses `AnimationPlayer` while the state machine expects `AnimationTree`
+2. Scene node hierarchies cannot be automatically modified via scripts
+3. The existing `scenes/player.tscn` has been preserved to maintain compatibility
 
-4. **Camera System** (`src/Player/Camera/`)
-   - `CameraRig.gd`: Main camera controller with spring arm and aim support
-   - `CameraState.gd`: Base class for camera states
-   - `SpringArm.gd`: Handles camera zoom
-   - `AimTarget.gd`: Visual target for aiming mode
-   - Camera States:
-     - `Camera.gd`: Parent camera state with rotation and auto-rotate
-     - `Default.gd`: Normal third-person camera mode
-     - `Aim.gd`: Over-the-shoulder aiming mode
+**Files that have been added:**
+- ✅ State machine core (`src/Main/StateMachine/`)
+- ✅ Player controller scripts (`src/Player/`)
+- ✅ Movement states (`src/Player/States/`)
+- ✅ Camera rig and states (`src/Player/Camera/`)
+- ✅ Input mappings (`project.godot`)
+- ✅ Aim reticle asset (`assets/2d/reticle.png`)
 
-## Key Features
-
-- **State-based architecture**: Clean separation of movement states (Idle, Run, Air)
-- **Camera state machine**: Separate states for default and aiming modes
-- **Camera-relative movement**: Character moves relative to camera orientation
-- **Spring arm camera**: Smooth camera following with collision avoidance
-- **Aiming mode**: Toggle between third-person and over-the-shoulder views
-- **Zoom support**: Mouse wheel zoom in/out
-- **Auto-rotation**: Camera automatically rotates behind the player when moving
-
-## Input Actions
-
-The following input actions have been added to `project.godot`:
-
-- `move_front` (W) - Move forward
-- `move_back` (S) - Move backward
-- `move_left` (A) - Strafe left
-- `move_right` (D) - Strafe right  
-- `look_left`, `look_right`, `look_up`, `look_down` - Gamepad camera control (not bound by default)
-- `jump` (Space) - Jump (already existed)
-- `toggle_aim` (Right Mouse Button) - Toggle aiming mode
-- `fire` (Left Mouse Button) - Fire/confirm in aim mode
-- `zoom_in` (Mouse Wheel Up) - Zoom camera in
-- `zoom_out` (Mouse Wheel Down) - Zoom camera out
+**What needs manual setup:**
+- ❌ AnimationTree configuration in player scene
+- ❌ StateMachine node hierarchy setup
+- ❌ CameraRig integration
+- ❌ Script attachment to player root
 
 ## Integration Steps
-
-### Manual Scene Setup Required
-
-Since slide-x uses `AnimationPlayer` while the state machine expects `AnimationTree`, manual setup in the Godot editor is required.
-
-**IMPORTANT**: The original `scenes/player.tscn` and `scripts/player.gd` have been preserved. You need to manually integrate the state machine into the player scene.
-
-#### Step-by-Step Instructions:
 
 1. **Open `scenes/player.tscn` in Godot**
 
