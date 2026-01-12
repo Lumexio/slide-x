@@ -1,13 +1,12 @@
-[gd_scene load_steps=10 format=2]
+[gd_scene load_steps=11 format=2]
 
 [ext_resource path="res://assets/textures/grids/Light/texture_07.png" type="Texture" id=1]
 [ext_resource path="res://assets/models/japanese_house_2.0/scene.gltf" type="PackedScene" id=2]
 [ext_resource path="res://assets/models/cyberpunk_building/scene.gltf" type="PackedScene" id=3]
 [ext_resource path="res://scenes/player.tscn" type="PackedScene" id=4]
-[ext_resource path="res://default_env.tres" type="Environment" id=7]
 
 [sub_resource type="PlaneMesh" id=1]
-size = Vector2( 100, 100 )
+size = Vector2( 50, 50 )
 
 [sub_resource type="SpatialMaterial" id=2]
 albedo_texture = ExtResource( 1 )
@@ -19,7 +18,16 @@ data = PoolVector3Array( 3.1212, 8.616, 1.599, 3.1212, 9.4867, 1.599, 3.1212, 9.
 
 [sub_resource type="BoxShape" id=3]
 
-[node name="main" type="Spatial"]
+[sub_resource type="ProceduralSky" id=5]
+
+[sub_resource type="Environment" id=6]
+background_mode = 2
+background_sky = SubResource( 5 )
+dof_blur_far_enabled = true
+dof_blur_far_distance = 3.64
+dof_blur_near_enabled = true
+
+[node name="Level 1" type="Spatial"]
 
 [node name="floor" type="CSGMesh" parent="."]
 use_collision = true
@@ -48,15 +56,10 @@ shape = SubResource( 3 )
 JUMP_VELOCITY = 5.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
-environment = ExtResource( 7 )
+environment = SubResource( 6 )
 
-[node name="TOD_Sun" type="DirectionalLight" parent="."]
-transform = Transform( 1, 0, 0, 0, 0.566823, 0.823839, 0, -0.823839, 0.566823, 0, 0, 0 )
-light_color = Color( 0.984314, 0.843137, 0.788235, 1 )
-light_energy = 0.823839
-
-[node name="TOD_Sky" type="Node" parent="."]
-
-[node name="TOD_Moon" type="DirectionalLight" parent="."]
-light_color = Color( 0.54, 0.7, 0.9, 1 )
-light_energy = 0.0
+[node name="DirectionalLight" type="DirectionalLight" parent="."]
+transform = Transform( 1, 0, 0, 0, -0.632489, 0.774569, 0, -0.774569, -0.632489, 0, 0, 0 )
+light_bake_mode = 2
+shadow_enabled = true
+shadow_color = Color( 0.0588235, 0, 0, 1 )
