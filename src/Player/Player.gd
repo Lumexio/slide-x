@@ -7,7 +7,8 @@ extends KinematicBody
 
 
 onready var camera: CameraRig = $CameraRig
-onready var skin: Mannequiny = $Visuals
+# Note: 'skin' naming follows 3d-character-testing convention for character visuals/animation controller
+onready var skin: Mannequiny = $visuals
 onready var state_machine: StateMachine = $StateMachine
 
 
