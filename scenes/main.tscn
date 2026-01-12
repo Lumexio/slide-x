@@ -1,10 +1,9 @@
-[gd_scene load_steps=12 format=2]
+[gd_scene load_steps=11 format=2]
 
 [ext_resource path="res://assets/textures/grids/Light/texture_07.png" type="Texture" id=1]
 [ext_resource path="res://assets/models/japanese_house_2.0/scene.gltf" type="PackedScene" id=2]
 [ext_resource path="res://assets/models/cyberpunk_building/scene.gltf" type="PackedScene" id=3]
 [ext_resource path="res://scenes/player.tscn" type="PackedScene" id=4]
-[ext_resource path="res://src/Player/Player.gd" type="Script" id=5]
 
 [sub_resource type="PlaneMesh" id=1]
 size = Vector2( 100, 100 )
@@ -75,7 +74,6 @@ transform = Transform( 100, 0, 0, 0, 1, 0, 0, 0, 100, 0, 0, 0 )
 shape = SubResource( 3 )
 
 [node name="Spatial" parent="." instance=ExtResource( 4 )]
-script = ExtResource( 5 )
 
 [node name="DirectionalLight" type="DirectionalLight" parent="."]
 transform = Transform( 1, 0, 0, 0, -0.973984, 0.226617, 0, -0.226617, -0.973984, 0, 0.0452408, 0 )
