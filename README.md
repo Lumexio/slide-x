@@ -12,7 +12,7 @@ A Godot 3.5 third-person action game with a state-machine-based character contro
 
 ## New: State Machine Architecture
 
-This project now includes a modular state-machine-based character controller ported from [3d-character-testing](https://github.com/Lumexio/3d-character-testing).
+This project now includes a fully integrated modular state-machine-based character controller ported from [3d-character-testing](https://github.com/Lumexio/3d-character-testing).
 
 ### Key Components
 
@@ -23,9 +23,10 @@ This project now includes a modular state-machine-based character controller por
 
 ### Getting Started
 
-The third-person character controller has been fully ported with all scripts and documentation. For complete information:
+The third-person character controller is fully integrated and ready to use:
 
-📖 **[Third-Person Controller Documentation](docs/third_person_controller.md)** - Main reference guide
+📖 **[Third-Person Controller Documentation](docs/third_person_controller.md)** - Architecture and usage guide
+⚙️ **[Integration Status](docs/STATE_MACHINE_INTEGRATION.md)** - Scene structure and testing guide
 
 The documentation covers:
 - Complete architecture overview and component descriptions
@@ -34,10 +35,6 @@ The documentation covers:
 - Input configuration reference
 - Extending the system with new states
 - Troubleshooting common issues
-
-⚙️ **[Manual Integration Guide](docs/STATE_MACHINE_INTEGRATION.md)** - Scene setup instructions
-
-Note: The player scene requires manual setup in the Godot editor to integrate the AnimationTree and state machine hierarchy. Follow the integration guide for step-by-step instructions.
 
 ### Controls
 
@@ -78,7 +75,8 @@ slide-x/
 │   ├── main.tscn                 # Main game scene
 │   └── player.tscn               # Player character scene
 ├── scripts/
-│   └── player.gd.backup          # Original player script (backup)
+│   ├── player.gd.old-legacy       # Original player script (backup)
+│   └── player.gd.backup           # Backup of original script
 ├── assets/                       # Models, textures, animations
 └── docs/
     └── STATE_MACHINE_INTEGRATION.md  # Integration guide
