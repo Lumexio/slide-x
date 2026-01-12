@@ -141,6 +141,7 @@ func play_action(anim_name, dash_speed = 0.0, dash_time = 0.0, anim_speed = 1.0)
 	# Set the speed before playing
 	animation_player.playback_speed = anim_speed
 	animation_player.play(anim_name)
+
 	
 	# Handle the dash
 	current_attack_dash_speed = dash_speed
