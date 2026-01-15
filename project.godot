@@ -11,16 +11,12 @@ config_version=4
 [application]
 
 config/name="slide-x"
-run/main_scene="res://scenes/main.tscn"
+run/main_scene="res://scenes/levels/level_1.tscn"
 config/icon="res://icon.png"
-
-[autoload]
-
-GlobalCelestials="*res://addons/time-of-day/src/sky/celestials/tod_global_celestials.gd"
 
 [editor_plugins]
 
-enabled=PoolStringArray(  )
+enabled=PoolStringArray( "res://addons/ambientcg/plugin.cfg" )
 
 [gui]
 
