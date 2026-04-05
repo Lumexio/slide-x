@@ -1,0 +1,15 @@
+[remap]
+
+importer="ogg_vorbis"
+type="AudioStreamOGGVorbis"
+path="res://.import/Car_Door_Open.ogg-def44b64e075ccaaddddcea7267c8fcd.oggstr"
+
+[deps]
+
+source_file="res://assets/models/Vehicles/PSX_Style_Cars_by_GGBot_(August2023)/Sound effects/Car_Door_Open.ogg"
+dest_files=[ "res://.import/Car_Door_Open.ogg-def44b64e075ccaaddddcea7267c8fcd.oggstr" ]
+
+[params]
+
+loop=true
+loop_offset=0

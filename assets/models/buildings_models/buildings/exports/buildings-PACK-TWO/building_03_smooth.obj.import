@@ -1,0 +1,20 @@
+[remap]
+
+importer="wavefront_obj"
+type="Mesh"
+path="res://.import/building_03_smooth.obj-ce4972f571c7ca80270ef9c2212771be.mesh"
+
+[deps]
+
+files=[ "res://.import/building_03_smooth.obj-ce4972f571c7ca80270ef9c2212771be.mesh" ]
+
+source_file="res://assets/models/buildings_models/buildings/exports/buildings-PACK-TWO/building_03_smooth.obj"
+dest_files=[ "res://.import/building_03_smooth.obj-ce4972f571c7ca80270ef9c2212771be.mesh", "res://.import/building_03_smooth.obj-ce4972f571c7ca80270ef9c2212771be.mesh" ]
+
+[params]
+
+generate_tangents=true
+scale_mesh=Vector3( 1, 1, 1 )
+offset_mesh=Vector3( 0, 0, 0 )
+octahedral_compression=true
+optimize_mesh_flags=4286

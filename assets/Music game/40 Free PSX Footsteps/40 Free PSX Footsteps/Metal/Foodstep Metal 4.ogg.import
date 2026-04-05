@@ -1,0 +1,15 @@
+[remap]
+
+importer="ogg_vorbis"
+type="AudioStreamOGGVorbis"
+path="res://.import/Foodstep Metal 4.ogg-1b0bbcf476c7a388307a128de14a6c6f.oggstr"
+
+[deps]
+
+source_file="res://assets/Music game/40 Free PSX Footsteps/40 Free PSX Footsteps/Metal/Foodstep Metal 4.ogg"
+dest_files=[ "res://.import/Foodstep Metal 4.ogg-1b0bbcf476c7a388307a128de14a6c6f.oggstr" ]
+
+[params]
+
+loop=true
+loop_offset=0

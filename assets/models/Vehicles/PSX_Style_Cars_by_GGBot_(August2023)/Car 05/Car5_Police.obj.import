@@ -1,0 +1,20 @@
+[remap]
+
+importer="wavefront_obj"
+type="Mesh"
+path="res://.import/Car5_Police.obj-01c225109fcab6a919334eeb5812318a.mesh"
+
+[deps]
+
+files=[ "res://.import/Car5_Police.obj-01c225109fcab6a919334eeb5812318a.mesh" ]
+
+source_file="res://assets/models/Vehicles/PSX_Style_Cars_by_GGBot_(August2023)/Car 05/Car5_Police.obj"
+dest_files=[ "res://.import/Car5_Police.obj-01c225109fcab6a919334eeb5812318a.mesh", "res://.import/Car5_Police.obj-01c225109fcab6a919334eeb5812318a.mesh" ]
+
+[params]
+
+generate_tangents=true
+scale_mesh=Vector3( 1, 1, 1 )
+offset_mesh=Vector3( 0, 0, 0 )
+octahedral_compression=true
+optimize_mesh_flags=4286

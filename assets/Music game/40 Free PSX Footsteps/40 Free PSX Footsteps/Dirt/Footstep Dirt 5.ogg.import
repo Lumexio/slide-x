@@ -1,0 +1,15 @@
+[remap]
+
+importer="ogg_vorbis"
+type="AudioStreamOGGVorbis"
+path="res://.import/Footstep Dirt 5.ogg-f8ce56b931d191b27468facd473c29b6.oggstr"
+
+[deps]
+
+source_file="res://assets/Music game/40 Free PSX Footsteps/40 Free PSX Footsteps/Dirt/Footstep Dirt 5.ogg"
+dest_files=[ "res://.import/Footstep Dirt 5.ogg-f8ce56b931d191b27468facd473c29b6.oggstr" ]
+
+[params]
+
+loop=true
+loop_offset=0

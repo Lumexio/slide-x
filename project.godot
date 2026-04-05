@@ -8,15 +8,25 @@
 
 config_version=4
 
+_global_script_classes=[ {
+"base": "Camera",
+"class": "AnaglyphCamera",
+"language": "GDScript",
+"path": "res://addons/silicon.3d.anaglyph/anaglyph_camera.gd"
+} ]
+_global_script_class_icons={
+"AnaglyphCamera": "res://addons/silicon.3d.anaglyph/anaglyph_camera.svg"
+}
+
 [application]
 
-config/name="slide-x"
-run/main_scene="res://scenes/levels/level_1.tscn"
+config/name="hypernull"
+run/main_scene="res://gui/main_menu.tscn"
 config/icon="res://icon.png"
 
 [editor_plugins]
 
-enabled=PoolStringArray( "res://addons/ambientcg/plugin.cfg" )
+enabled=PoolStringArray( "res://addons/silicon.3d.anaglyph/plugin.cfg" )
 
 [gui]
 
@@ -24,6 +34,11 @@ common/drop_mouse_on_gui_input_disabled=true
 
 [input]
 
+ui_cancel={
+"deadzone": 0.5,
+"events": [ Object(InputEventJoypadButton,"resource_local_to_scene":false,"resource_name":"","device":0,"button_index":1,"pressure":0.0,"pressed":false,"script":null)
+ ]
+}
 ui_left={
 "deadzone": 0.5,
 "events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":65,"physical_scancode":0,"unicode":0,"echo":false,"script":null)
@@ -73,10 +88,17 @@ jump={
 "events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":0,"physical_scancode":32,"unicode":0,"echo":false,"script":null)
  ]
 }
+pause_game={
+"deadzone": 0.5,
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":16777217,"physical_scancode":0,"unicode":0,"echo":false,"script":null)
+, Object(InputEventJoypadButton,"resource_local_to_scene":false,"resource_name":"","device":0,"button_index":11,"pressure":0.0,"pressed":false,"script":null)
+ ]
+}
 
 [physics]
 
 common/enable_pause_aware_picking=true
+3d/physics_engine="GodotPhysics"
 
 [rendering]
 

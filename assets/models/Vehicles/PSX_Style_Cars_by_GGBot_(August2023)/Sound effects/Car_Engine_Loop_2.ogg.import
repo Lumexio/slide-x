@@ -1,0 +1,15 @@
+[remap]
+
+importer="ogg_vorbis"
+type="AudioStreamOGGVorbis"
+path="res://.import/Car_Engine_Loop_2.ogg-92e92f7e42c683e047fd6199642552de.oggstr"
+
+[deps]
+
+source_file="res://assets/models/Vehicles/PSX_Style_Cars_by_GGBot_(August2023)/Sound effects/Car_Engine_Loop_2.ogg"
+dest_files=[ "res://.import/Car_Engine_Loop_2.ogg-92e92f7e42c683e047fd6199642552de.oggstr" ]
+
+[params]
+
+loop=true
+loop_offset=0

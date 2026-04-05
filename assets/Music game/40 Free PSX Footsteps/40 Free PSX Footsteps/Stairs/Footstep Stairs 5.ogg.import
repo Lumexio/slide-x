@@ -1,0 +1,15 @@
+[remap]
+
+importer="ogg_vorbis"
+type="AudioStreamOGGVorbis"
+path="res://.import/Footstep Stairs 5.ogg-1e94b9641ffe1efc4ae21b7a21b5bdd0.oggstr"
+
+[deps]
+
+source_file="res://assets/Music game/40 Free PSX Footsteps/40 Free PSX Footsteps/Stairs/Footstep Stairs 5.ogg"
+dest_files=[ "res://.import/Footstep Stairs 5.ogg-1e94b9641ffe1efc4ae21b7a21b5bdd0.oggstr" ]
+
+[params]
+
+loop=true
+loop_offset=0

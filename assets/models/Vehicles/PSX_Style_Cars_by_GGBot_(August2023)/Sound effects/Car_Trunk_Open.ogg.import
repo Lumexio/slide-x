@@ -1,0 +1,15 @@
+[remap]
+
+importer="ogg_vorbis"
+type="AudioStreamOGGVorbis"
+path="res://.import/Car_Trunk_Open.ogg-b8cd83d44262d0e66b7ee851d1bdfb7c.oggstr"
+
+[deps]
+
+source_file="res://assets/models/Vehicles/PSX_Style_Cars_by_GGBot_(August2023)/Sound effects/Car_Trunk_Open.ogg"
+dest_files=[ "res://.import/Car_Trunk_Open.ogg-b8cd83d44262d0e66b7ee851d1bdfb7c.oggstr" ]
+
+[params]
+
+loop=true
+loop_offset=0

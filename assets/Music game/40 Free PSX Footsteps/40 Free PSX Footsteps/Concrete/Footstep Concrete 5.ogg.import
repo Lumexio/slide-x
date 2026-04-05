@@ -1,0 +1,15 @@
+[remap]
+
+importer="ogg_vorbis"
+type="AudioStreamOGGVorbis"
+path="res://.import/Footstep Concrete 5.ogg-bb76339ee48eaec12063660266958770.oggstr"
+
+[deps]
+
+source_file="res://assets/Music game/40 Free PSX Footsteps/40 Free PSX Footsteps/Concrete/Footstep Concrete 5.ogg"
+dest_files=[ "res://.import/Footstep Concrete 5.ogg-bb76339ee48eaec12063660266958770.oggstr" ]
+
+[params]
+
+loop=true
+loop_offset=0
