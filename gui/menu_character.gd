@@ -1,10 +1,6 @@
 extends Spatial
 
 
-# Declare member variables here. Examples:
-# var a = 2
-# var b = "text"
-
 onready var KineticChad=$"KineticChad"
 onready var AkimboBoy=$"AkimboBoy"
 onready var FairyFire=$"FairyFire"
@@ -21,16 +17,6 @@ func _ready():
 	add_child(selection_tween)
 	_select_character("AkimboBoy", false)
 	
-
-
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-#func _process(delta):
-#	pass
-# Set initial positions for characters
-
-
-# I want that the characters are next to each other and when I click on the button assigned	to the character, it moves to the center and the other one moves to the side. I also want that when I click on the button assigned to the character, it changes the current_character variable to the name of the character.
 
 
 func _select_character(character_name, animate = true):
