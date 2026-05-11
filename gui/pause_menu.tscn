@@ -1,7 +1,16 @@
-[gd_scene load_steps=4 format=2]
+[gd_scene load_steps=33 format=2]
 
 [ext_resource path="res://addons/GodotRetro/Screen Shaders/AccurateCRT.shader" type="Shader" id=1]
 [ext_resource path="res://gui/pause_menu.gd" type="Script" id=2]
+[ext_resource path="res://gui/RetroWindowsGUI/Flag.png" type="Texture" id=3]
+[ext_resource path="res://assets/RetroWindowsGUI/Windows_Button_Focus_Outlined.png" type="Texture" id=4]
+[ext_resource path="res://assets/RetroWindowsGUI/Windows_Button_Inactive.png" type="Texture" id=5]
+[ext_resource path="res://assets/RetroWindowsGUI/Windows_Button_Pressed.png" type="Texture" id=6]
+[ext_resource path="res://assets/RetroWindowsGUI/Windows_Button_Focus.png" type="Texture" id=7]
+[ext_resource path="res://assets/RetroWindowsGUI/Windows_Button.png" type="Texture" id=8]
+[ext_resource path="res://assets/Fonts/Battlenet.ttf" type="DynamicFontData" id=9]
+[ext_resource path="res://assets/RetroWindowsGUI/Windows_Progress_Fill.png" type="Texture" id=10]
+[ext_resource path="res://assets/RetroWindowsGUI/Window_Base.png" type="Texture" id=11]
 
 [sub_resource type="ShaderMaterial" id=1]
 shader = ExtResource( 1 )
@@ -17,6 +26,151 @@ shader_param/warp = Vector2( 64, 24 )
 shader_param/maskDark = 0.5
 shader_param/maskLight = 1.5
 
+[sub_resource type="StyleBoxTexture" id=20]
+texture = ExtResource( 11 )
+region_rect = Rect2( 0, 0, 15, 15 )
+margin_left = 5.0
+margin_right = 5.0
+margin_top = 5.0
+margin_bottom = 5.0
+expand_margin_top = 5.0
+
+[sub_resource type="StyleBoxTexture" id=21]
+texture = ExtResource( 10 )
+region_rect = Rect2( 0, 0, 16, 16 )
+
+[sub_resource type="StyleBoxTexture" id=22]
+texture = ExtResource( 8 )
+region_rect = Rect2( 0, 0, 15, 15 )
+margin_left = 5.0
+margin_right = 5.0
+margin_top = 5.0
+margin_bottom = 5.0
+
+[sub_resource type="DynamicFont" id=3]
+size = 34
+font_data = ExtResource( 9 )
+
+[sub_resource type="StyleBoxTexture" id=4]
+texture = ExtResource( 7 )
+region_rect = Rect2( 0, 0, 15, 15 )
+margin_left = 5.0
+margin_right = 5.0
+margin_top = 5.0
+margin_bottom = 5.0
+
+[sub_resource type="StyleBoxTexture" id=5]
+texture = ExtResource( 6 )
+region_rect = Rect2( 0, 0, 15, 15 )
+margin_left = 5.0
+margin_right = 5.0
+margin_top = 5.0
+margin_bottom = 5.0
+
+[sub_resource type="StyleBoxTexture" id=6]
+texture = ExtResource( 4 )
+region_rect = Rect2( 0, 0, 15, 15 )
+margin_left = 5.0
+margin_right = 5.0
+margin_top = 5.0
+margin_bottom = 5.0
+
+[sub_resource type="StyleBoxTexture" id=7]
+texture = ExtResource( 5 )
+region_rect = Rect2( 0, 0, 15, 15 )
+margin_left = 5.0
+margin_right = 5.0
+margin_top = 5.0
+margin_bottom = 5.0
+
+[sub_resource type="StyleBoxTexture" id=8]
+texture = ExtResource( 8 )
+region_rect = Rect2( 0, 0, 15, 15 )
+margin_left = 5.0
+margin_right = 5.0
+margin_top = 5.0
+margin_bottom = 5.0
+
+[sub_resource type="DynamicFont" id=9]
+size = 34
+font_data = ExtResource( 9 )
+
+[sub_resource type="StyleBoxTexture" id=10]
+texture = ExtResource( 7 )
+region_rect = Rect2( 0, 0, 15, 15 )
+margin_left = 5.0
+margin_right = 5.0
+margin_top = 5.0
+margin_bottom = 5.0
+
+[sub_resource type="StyleBoxTexture" id=11]
+texture = ExtResource( 6 )
+region_rect = Rect2( 0, 0, 15, 15 )
+margin_left = 5.0
+margin_right = 5.0
+margin_top = 5.0
+margin_bottom = 5.0
+
+[sub_resource type="StyleBoxTexture" id=12]
+texture = ExtResource( 4 )
+region_rect = Rect2( 0, 0, 15, 15 )
+margin_left = 5.0
+margin_right = 5.0
+margin_top = 5.0
+margin_bottom = 5.0
+
+[sub_resource type="StyleBoxTexture" id=13]
+texture = ExtResource( 8 )
+region_rect = Rect2( 0, 0, 15, 15 )
+margin_left = 5.0
+margin_right = 5.0
+margin_top = 5.0
+margin_bottom = 5.0
+
+[sub_resource type="DynamicFont" id=14]
+size = 34
+font_data = ExtResource( 9 )
+
+[sub_resource type="StyleBoxTexture" id=15]
+texture = ExtResource( 7 )
+region_rect = Rect2( 0, 0, 15, 15 )
+margin_left = 5.0
+margin_right = 5.0
+margin_top = 5.0
+margin_bottom = 5.0
+
+[sub_resource type="StyleBoxTexture" id=16]
+texture = ExtResource( 6 )
+region_rect = Rect2( 0, 0, 15, 15 )
+margin_left = 5.0
+margin_right = 5.0
+margin_top = 5.0
+margin_bottom = 5.0
+
+[sub_resource type="StyleBoxTexture" id=17]
+texture = ExtResource( 4 )
+region_rect = Rect2( 0, 0, 15, 15 )
+margin_left = 5.0
+margin_right = 5.0
+margin_top = 5.0
+margin_bottom = 5.0
+
+[sub_resource type="StyleBoxTexture" id=18]
+texture = ExtResource( 5 )
+region_rect = Rect2( 0, 0, 15, 15 )
+margin_left = 5.0
+margin_right = 5.0
+margin_top = 5.0
+margin_bottom = 5.0
+
+[sub_resource type="StyleBoxTexture" id=19]
+texture = ExtResource( 8 )
+region_rect = Rect2( 0, 0, 15, 15 )
+margin_left = 5.0
+margin_right = 5.0
+margin_top = 5.0
+margin_bottom = 5.0
+
 [node name="PauseMenu" type="Control"]
 pause_mode = 1
 anchor_right = 1.0
@@ -31,46 +185,98 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 color = Color( 0, 0, 0, 0 )
 
-[node name="PanelContainer" type="PanelContainer" parent="."]
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-margin_left = -160.0
-margin_top = -148.0
-margin_right = 160.0
-margin_bottom = 148.0
+[node name="Panel" type="Panel" parent="."]
+margin_left = 288.0
+margin_top = 136.0
+margin_right = 736.0
+margin_bottom = 496.0
+custom_styles/panel = SubResource( 20 )
 
-[node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer"]
-margin_left = 7.0
-margin_top = 7.0
-margin_right = 313.0
-margin_bottom = 289.0
-custom_constants/separation = 50
-alignment = 1
+[node name="TopBarWindow" type="Panel" parent="Panel"]
+margin_left = 8.0
+margin_right = 440.0
+margin_bottom = 32.0
+custom_styles/panel = SubResource( 21 )
 
-[node name="Resume" type="Button" parent="PanelContainer/VBoxContainer"]
-margin_top = 61.0
-margin_right = 306.0
-margin_bottom = 81.0
+[node name="CloseButtonWindow" type="Panel" parent="Panel/TopBarWindow"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 404.0
+margin_top = 3.0
+margin_right = -3.0
+margin_bottom = -4.0
+rect_pivot_offset = Vector2( 13, 13 )
+custom_styles/panel = SubResource( 22 )
+
+[node name="Label2" type="Label" parent="Panel/TopBarWindow/CloseButtonWindow"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+text = "X"
+align = 1
+valign = 1
+
+[node name="Flag" type="Sprite" parent="Panel/TopBarWindow"]
+position = Vector2( 19, 14.25 )
+scale = Vector2( 1.86667, 2.13636 )
+texture = ExtResource( 3 )
+
+[node name="Resume" type="Button" parent="Panel"]
+margin_left = 96.0
+margin_top = 56.0
+margin_right = 352.0
+margin_bottom = 120.0
 grow_horizontal = 2
 grow_vertical = 2
+custom_colors/font_color_disabled = Color( 0, 0, 0, 1 )
+custom_colors/font_color_focus = Color( 0, 0, 0, 1 )
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+custom_colors/font_color_hover = Color( 0, 0, 0, 1 )
+custom_colors/font_color_pressed = Color( 0, 0, 0, 1 )
+custom_fonts/font = SubResource( 3 )
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 5 )
+custom_styles/focus = SubResource( 6 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 8 )
 text = "Resume"
 icon_align = 1
 
-[node name="GoToMainMenu" type="Button" parent="PanelContainer/VBoxContainer"]
-margin_top = 131.0
-margin_right = 306.0
-margin_bottom = 151.0
+[node name="GoToMainMenu" type="Button" parent="Panel"]
+margin_left = 96.0
+margin_top = 160.0
+margin_right = 352.0
+margin_bottom = 224.0
+custom_colors/font_color_disabled = Color( 0, 0, 0, 1 )
+custom_colors/font_color_focus = Color( 0, 0, 0, 1 )
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+custom_colors/font_color_hover = Color( 0, 0, 0, 1 )
+custom_colors/font_color_pressed = Color( 0, 0, 0, 1 )
+custom_fonts/font = SubResource( 9 )
+custom_styles/hover = SubResource( 10 )
+custom_styles/pressed = SubResource( 11 )
+custom_styles/focus = SubResource( 12 )
+custom_styles/normal = SubResource( 13 )
 text = "Go to main menu"
 
-[node name="Quit" type="Button" parent="PanelContainer/VBoxContainer"]
-margin_top = 201.0
-margin_right = 306.0
-margin_bottom = 221.0
+[node name="Quit" type="Button" parent="Panel"]
+margin_left = 96.0
+margin_top = 256.0
+margin_right = 352.0
+margin_bottom = 320.0
+custom_colors/font_color_disabled = Color( 0, 0, 0, 1 )
+custom_colors/font_color_focus = Color( 0, 0, 0, 1 )
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+custom_colors/font_color_hover = Color( 0, 0, 0, 1 )
+custom_fonts/font = SubResource( 14 )
+custom_styles/hover = SubResource( 15 )
+custom_styles/pressed = SubResource( 16 )
+custom_styles/focus = SubResource( 17 )
+custom_styles/disabled = SubResource( 18 )
+custom_styles/normal = SubResource( 19 )
 text = "Quit"
 icon_align = 1
 
-[connection signal="pressed" from="PanelContainer/VBoxContainer/Resume" to="." method="_on_Resume_pressed"]
-[connection signal="pressed" from="PanelContainer/VBoxContainer/GoToMainMenu" to="." method="_on_GoToMainMenu_pressed"]
-[connection signal="pressed" from="PanelContainer/VBoxContainer/Quit" to="." method="_on_Quit_pressed"]
+[connection signal="pressed" from="Panel/Resume" to="." method="_on_Resume_pressed"]
+[connection signal="pressed" from="Panel/GoToMainMenu" to="." method="_on_GoToMainMenu_pressed"]
+[connection signal="pressed" from="Panel/Quit" to="." method="_on_Quit_pressed"]
