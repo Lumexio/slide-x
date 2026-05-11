@@ -23,20 +23,26 @@ var detached_world2d_scene = null
 var detached_ui_scene = null
 
 func _ready():
-	if world3d_path and has_node(world3d_path):
+	if not world3d_path:
+		push_error("GameController: world3d_path is not set.")
+	elif not has_node(world3d_path):
+		push_error("GameController: no node found at world3d_path '" + str(world3d_path) + "'.")
+	else:
 		world3d_container = get_node(world3d_path)
-	else:
-		push_error("GameController: world3d_path is not set or the node was not found.")
 
-	if world2d_path and has_node(world2d_path):
+	if not world2d_path:
+		push_error("GameController: world2d_path is not set.")
+	elif not has_node(world2d_path):
+		push_error("GameController: no node found at world2d_path '" + str(world2d_path) + "'.")
+	else:
 		world2d_container = get_node(world2d_path)
-	else:
-		push_error("GameController: world2d_path is not set or the node was not found.")
 
-	if ui_path and has_node(ui_path):
-		ui_container = get_node(ui_path)
+	if not ui_path:
+		push_error("GameController: ui_path is not set.")
+	elif not has_node(ui_path):
+		push_error("GameController: no node found at ui_path '" + str(ui_path) + "'.")
 	else:
-		push_error("GameController: ui_path is not set or the node was not found.")
+		ui_container = get_node(ui_path)
 
 	GameGlobal.set_game_controller(self)
 
