@@ -71,6 +71,10 @@ func _change_scene(scene_path, container, current_scene, layer_name, unload_mode
 		return current_scene
 
 	var new_scene = loaded_resource.instance()
+	if new_scene == null:
+		push_error("Failed to instance scene: " + str(scene_path))
+		_debug_print_state(layer_name)
+		return current_scene
 
 	# New scene is confirmed valid — now safely unload the old one.
 	if current_scene != null and is_instance_valid(current_scene):
@@ -83,21 +87,20 @@ func _change_scene(scene_path, container, current_scene, layer_name, unload_mode
 func _unload_current_scene(current_scene, container, layer_name, unload_mode):
 	if unload_mode == UnloadMode.DELETE:
 		current_scene.queue_free()
-		return null
+		return
 
 	if unload_mode == UnloadMode.HIDE:
 		_set_scene_visibility(current_scene, false)
-		return current_scene
+		return
 
 	if unload_mode == UnloadMode.DETACH:
 		if current_scene.get_parent() == container:
 			container.remove_child(current_scene)
 		_set_detached_scene(layer_name, current_scene)
-		return null
+		return
 
 	push_error("Unknown unload mode: " + str(unload_mode) + ". Falling back to DELETE.")
 	current_scene.queue_free()
-	return null
 
 func _set_scene_visibility(scene_node, is_visible):
 	if scene_node is Spatial:
