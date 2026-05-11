@@ -58,6 +58,15 @@ func change_world3d_scene(scene_path, unload_mode = UnloadMode.DELETE):
 		unload_mode
 	)
 
+func change_world3d_scene_from_packed(packed_scene, unload_mode = UnloadMode.DELETE):
+	current_world3d_scene = _change_scene_from_packed(
+		packed_scene,
+		world3d_container,
+		current_world3d_scene,
+		"world3d",
+		unload_mode
+	)
+
 func change_world2d_scene(scene_path, unload_mode = UnloadMode.DELETE):
 	current_world2d_scene = _change_scene(
 		scene_path,
@@ -101,6 +110,29 @@ func _change_scene(scene_path, container, current_scene, layer_name, unload_mode
 		return current_scene
 
 	# New scene is confirmed valid — now safely unload the old one.
+	if current_scene != null and is_instance_valid(current_scene):
+		_unload_current_scene(current_scene, container, layer_name, unload_mode)
+
+	container.add_child(new_scene)
+	_debug_print_state(layer_name)
+	return new_scene
+
+func _change_scene_from_packed(packed_scene, container, current_scene, layer_name, unload_mode):
+	if container == null:
+		push_error("GameController: container for layer '" + layer_name + "' is null; cannot change scene.")
+		return current_scene
+
+	if packed_scene == null or not (packed_scene is PackedScene):
+		push_error("GameController: invalid PackedScene for layer '" + layer_name + "'.")
+		_debug_print_state(layer_name)
+		return current_scene
+
+	var new_scene = packed_scene.instance()
+	if new_scene == null:
+		push_error("GameController: failed to instance PackedScene for layer '" + layer_name + "'.")
+		_debug_print_state(layer_name)
+		return current_scene
+
 	if current_scene != null and is_instance_valid(current_scene):
 		_unload_current_scene(current_scene, container, layer_name, unload_mode)
 

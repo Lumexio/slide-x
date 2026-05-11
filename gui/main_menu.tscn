@@ -301,6 +301,16 @@ text = "Start Game"
 icon_align = 1
 expand_icon = true
 
+[node name="LoadingBar" type="ProgressBar" parent="WindowStartGame"]
+visible = false
+margin_left = 24.0
+margin_top = 150.0
+margin_right = 296.0
+margin_bottom = 172.0
+custom_styles/fg = SubResource( 24 )
+custom_styles/bg = SubResource( 23 )
+percent_visible = false
+
 [node name="TopBarWindow" type="Panel" parent="WindowStartGame"]
 margin_left = 5.0
 margin_top = 5.0
