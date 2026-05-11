@@ -57,24 +57,25 @@ func change_ui_scene(scene_path, unload_mode = UnloadMode.DELETE):
 	)
 
 func _change_scene(scene_path, container, current_scene, layer_name, unload_mode):
-	if current_scene != null and is_instance_valid(current_scene):
-		current_scene = _unload_current_scene(current_scene, container, layer_name, unload_mode)
-	else:
-		current_scene = null
-
+	# Load and validate the new scene BEFORE unloading the old one.
+	# This prevents a blank screen when the load fails.
 	var loaded_resource = load(scene_path)
 	if loaded_resource == null:
 		push_error("Failed to load scene: " + str(scene_path))
 		_debug_print_state(layer_name)
-		return null
+		return current_scene
 
 	if not (loaded_resource is PackedScene):
 		push_error("Loaded resource is not a PackedScene: " + str(scene_path))
 		_debug_print_state(layer_name)
-		return null
+		return current_scene
 
-	var packed_scene = loaded_resource
-	var new_scene = packed_scene.instance()
+	var new_scene = loaded_resource.instance()
+
+	# New scene is confirmed valid — now safely unload the old one.
+	if current_scene != null and is_instance_valid(current_scene):
+		_unload_current_scene(current_scene, container, layer_name, unload_mode)
+
 	container.add_child(new_scene)
 	_debug_print_state(layer_name)
 	return new_scene
