@@ -109,6 +109,8 @@ func _set_detached_scene(layer_name, scene_node):
 		detached_world2d_scene = scene_node
 	elif layer_name == "ui":
 		detached_ui_scene = scene_node
+	else:
+		push_error("Unknown layer name for detached scene: " + str(layer_name))
 
 func _get_detached_scene(layer_name):
 	if layer_name == "world3d":
@@ -117,6 +119,7 @@ func _get_detached_scene(layer_name):
 		return detached_world2d_scene
 	elif layer_name == "ui":
 		return detached_ui_scene
+	push_error("Unknown layer name while reading detached scene: " + str(layer_name))
 	return null
 
 func _debug_print_state(layer_name):
