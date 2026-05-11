@@ -62,12 +62,18 @@ func _change_scene(scene_path, container, current_scene, layer_name, unload_mode
 	else:
 		current_scene = null
 
-	var packed_scene = load(scene_path)
-	if packed_scene == null:
+	var loaded_resource = load(scene_path)
+	if loaded_resource == null:
 		push_error("Failed to load scene: " + str(scene_path))
 		_debug_print_state(layer_name)
 		return null
 
+	if not (loaded_resource is PackedScene):
+		push_error("Loaded resource is not a PackedScene: " + str(scene_path))
+		_debug_print_state(layer_name)
+		return null
+
+	var packed_scene = loaded_resource
 	var new_scene = packed_scene.instance()
 	container.add_child(new_scene)
 	_debug_print_state(layer_name)
