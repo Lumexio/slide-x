@@ -25,6 +25,8 @@ var _active_loading_bar = null
 var _active_loading_label = null
 var _current_scene_path = ""
 
+export var hide_unselected_characters = true
+
 const CHARACTER_ORDER = ["AkimboBoy", "KineticChad", "FairyFire"]
 onready var CHARACTER_NODES = [AkimboBoy, KineticChad, FairyFire]
 const CHARACTER_SPACING = 3.0
@@ -71,9 +73,29 @@ func _select_character(character_name, animate = true):
 			)
 		else:
 			character.translation = target_translation
+		_set_character_active(character, index == selected_index)
 
 	if animate:
 		selection_tween.start()
+
+func _set_character_active(character, active):
+	if character == null:
+		return
+	if hide_unselected_characters:
+		character.visible = active
+	var anim = _get_character_anim(character)
+	if anim == null:
+		return
+	if active:
+		if anim.has_animation("idle"):
+			anim.play("idle")
+		elif anim.current_animation != "":
+			anim.play(anim.current_animation)
+	else:
+		anim.stop()
+
+func _get_character_anim(character):
+	return character.get_node_or_null("meele-guy/AnimationPlayer")
 
 func _unhandled_input(event):
 	if _is_loading:
