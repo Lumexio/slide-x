@@ -66,8 +66,14 @@ func _on__Back_pressed():
 	var controller = GameGlobal.get_game_controller()
 	if controller != null:
 		controller.change_world3d_scene("res://gui/main_menu.tscn")
+	else:
+		push_error("GameGlobal.get_game_controller() returned null in _on__Back_pressed(); falling back to direct scene change.")
+		get_tree().change_scene("res://gui/main_menu.tscn")
 
 func _on_Start_Game_pressed():
 	var controller = GameGlobal.get_game_controller()
 	if controller != null:
 		controller.change_world3d_scene("res://scenes/levels/level_1.tscn")
+	else:
+		push_error("GameGlobal.get_game_controller() returned null in _on_Start_Game_pressed(); falling back to direct scene change.")
+		get_tree().change_scene("res://scenes/levels/level_1.tscn")

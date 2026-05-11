@@ -23,11 +23,25 @@ var detached_world2d_scene = null
 var detached_ui_scene = null
 
 func _ready():
-	world3d_container = get_node(world3d_path)
-	world2d_container = get_node(world2d_path)
-	ui_container = get_node(ui_path)
+	if world3d_path and has_node(world3d_path):
+		world3d_container = get_node(world3d_path)
+	else:
+		push_error("GameController: world3d_path is not set or the node was not found.")
+
+	if world2d_path and has_node(world2d_path):
+		world2d_container = get_node(world2d_path)
+	else:
+		push_error("GameController: world2d_path is not set or the node was not found.")
+
+	if ui_path and has_node(ui_path):
+		ui_container = get_node(ui_path)
+	else:
+		push_error("GameController: ui_path is not set or the node was not found.")
+
 	GameGlobal.set_game_controller(self)
-	change_world3d_scene("res://gui/main_menu.tscn", UnloadMode.DELETE)
+
+	if world3d_container != null:
+		change_world3d_scene("res://gui/main_menu.tscn", UnloadMode.DELETE)
 
 func change_world3d_scene(scene_path, unload_mode = UnloadMode.DELETE):
 	current_world3d_scene = _change_scene(
@@ -57,6 +71,10 @@ func change_ui_scene(scene_path, unload_mode = UnloadMode.DELETE):
 	)
 
 func _change_scene(scene_path, container, current_scene, layer_name, unload_mode):
+	if container == null:
+		push_error("GameController: container for layer '" + layer_name + "' is null; cannot change scene.")
+		return current_scene
+
 	# Load and validate the new scene BEFORE unloading the old one.
 	# This prevents a blank screen when the load fails.
 	var loaded_resource = load(scene_path)
@@ -108,6 +126,16 @@ func _set_scene_visibility(scene_node, is_visible):
 		scene_node.visible = is_visible
 	elif scene_node is CanvasItem:
 		scene_node.visible = is_visible
+	# Also suspend/resume processing so hidden scenes don't consume CPU.
+	_set_processing_recursive(scene_node, is_visible)
+
+func _set_processing_recursive(node, enabled):
+	node.set_process(enabled)
+	node.set_physics_process(enabled)
+	node.set_process_input(enabled)
+	node.set_process_unhandled_input(enabled)
+	for child in node.get_children():
+		_set_processing_recursive(child, enabled)
 
 func _set_detached_scene(layer_name, scene_node):
 	var previous_scene = _get_detached_scene(layer_name)
@@ -134,6 +162,8 @@ func _get_detached_scene(layer_name):
 	return null
 
 func _debug_print_state(layer_name):
+	if not OS.is_debug_build():
+		return
 	print(
 		"[SceneController] layer=", layer_name,
 		" current3d=", _scene_name(current_world3d_scene),
