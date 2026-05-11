@@ -88,6 +88,7 @@ func _unload_current_scene(current_scene, container, layer_name, unload_mode):
 		_set_detached_scene(layer_name, current_scene)
 		return null
 
+	push_error("Unknown unload mode: " + str(unload_mode) + ". Falling back to DELETE.")
 	current_scene.queue_free()
 	return null
 
@@ -112,9 +113,9 @@ func _set_detached_scene(layer_name, scene_node):
 func _get_detached_scene(layer_name):
 	if layer_name == "world3d":
 		return detached_world3d_scene
-	if layer_name == "world2d":
+	elif layer_name == "world2d":
 		return detached_world2d_scene
-	if layer_name == "ui":
+	elif layer_name == "ui":
 		return detached_ui_scene
 	return null
 
