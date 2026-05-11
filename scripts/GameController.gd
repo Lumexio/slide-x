@@ -101,6 +101,7 @@ func _unload_current_scene(current_scene, container, layer_name, unload_mode):
 
 	push_error("Unknown unload mode: " + str(unload_mode) + ". Falling back to DELETE.")
 	current_scene.queue_free()
+	return
 
 func _set_scene_visibility(scene_node, is_visible):
 	if scene_node is Spatial:
