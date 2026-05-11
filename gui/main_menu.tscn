@@ -1,4 +1,4 @@
-[gd_scene load_steps=34 format=2]
+[gd_scene load_steps=33 format=2]
 
 [ext_resource path="res://gui/CSGSphere.gd" type="Script" id=1]
 [ext_resource path="res://assets/RetroWindowsGUI/Windows_Button_Focus.png" type="Texture" id=2]
@@ -151,14 +151,12 @@ margin_right = 2.0
 margin_top = 2.0
 margin_bottom = 2.0
 
-[sub_resource type="DynamicFontData" id=27]
-font_path = "res://assets/Fonts/soft_retro/soft_retro/Righteous/Righteous-Regular.ttf"
-
 [sub_resource type="DynamicFont" id=22]
+size = 36
 outline_color = Color( 0, 0, 0, 1 )
 use_filter = true
 extra_spacing_char = 4
-font_data = SubResource( 27 )
+font_data = ExtResource( 7 )
 
 [sub_resource type="StyleBoxTexture" id=23]
 texture = ExtResource( 12 )
