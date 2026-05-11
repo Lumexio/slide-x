@@ -14,32 +14,11 @@
 [ext_resource path="res://assets/RetroWindowsGUI/Window_Base.png" type="Texture" id=12]
 [ext_resource path="res://assets/Fonts/Jersey10-Regular.ttf" type="DynamicFontData" id=13]
 [ext_resource path="res://gui/RetroWindowsGUI/Flag.png" type="Texture" id=14]
+[ext_resource path="res://gui/scanline_overlay.gd" type="Script" id=15]
 
 [sub_resource type="Environment" id=1]
 background_mode = 1
 background_color = Color( 0.627451, 0.627451, 0.627451, 1 )
-
-[sub_resource type="Shader" id=26]
-code = "shader_type canvas_item;
-
-uniform float SCREEN_HEIGHT = 240.0;
-
-void fragment(){
-	int y_index=int(UV.y*SCREEN_HEIGHT);
-	if(y_index %2==0){
-		COLOR.a=0.1;
-		COLOR.b=0.2;
-		COLOR.r=0.5;
-	}else{
-		COLOR.a=0.0;
-		COLOR.b=0.0;
-		COLOR.r=0.0;
-	}
-} "
-
-[sub_resource type="ShaderMaterial" id=17]
-shader = SubResource( 26 )
-shader_param/SCREEN_HEIGHT = 240.0
 
 [sub_resource type="DynamicFont" id=9]
 size = 136
@@ -184,15 +163,14 @@ script = ExtResource( 6 )
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource( 1 )
 
-[node name="ColorRect" type="ColorRect" parent="WorldEnvironment"]
-material = SubResource( 17 )
+[node name="ColorRect" type="TextureRect" parent="WorldEnvironment"]
+script = ExtResource( 15 )
 anchor_right = 1.0
 anchor_bottom = 1.0
 margin_left = 1.0
 margin_top = 1.0
 margin_right = 1.0
 margin_bottom = 1.0
-color = Color( 0, 0, 0, 0 )
 
 [node name="Label" type="Label" parent="WorldEnvironment"]
 margin_left = 11.0

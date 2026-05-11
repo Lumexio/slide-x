@@ -19,6 +19,7 @@ var _finish_requested = false
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
+	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	_focus_index = 0
 	_apply_focus()
 	set_process(false)
