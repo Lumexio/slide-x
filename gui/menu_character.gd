@@ -63,7 +63,11 @@ func _on_FairyFire_pressed():
 
 
 func _on__Back_pressed():
-	get_tree().change_scene("res://gui/main_menu.tscn")
+	var controller = GameGlobal.get_game_controller()
+	if controller != null:
+		controller.change_world3d_scene("res://gui/main_menu.tscn")
 
 func _on_Start_Game_pressed():
-	get_tree().change_scene("res://scenes/levels/level_1.tscn")
+	var controller = GameGlobal.get_game_controller()
+	if controller != null:
+		controller.change_world3d_scene("res://scenes/levels/level_1.tscn")

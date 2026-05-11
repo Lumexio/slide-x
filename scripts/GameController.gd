@@ -1,0 +1,135 @@
+extends Node
+
+enum UnloadMode {
+	DELETE,
+	HIDE,
+	DETACH
+}
+
+export (NodePath) var world3d_path
+export (NodePath) var world2d_path
+export (NodePath) var ui_path
+
+var world3d_container = null
+var world2d_container = null
+var ui_container = null
+
+var current_world3d_scene = null
+var current_world2d_scene = null
+var current_ui_scene = null
+
+var detached_world3d_scene = null
+var detached_world2d_scene = null
+var detached_ui_scene = null
+
+func _ready():
+	world3d_container = get_node(world3d_path)
+	world2d_container = get_node(world2d_path)
+	ui_container = get_node(ui_path)
+	GameGlobal.set_game_controller(self)
+	change_world3d_scene("res://gui/main_menu.tscn", UnloadMode.DELETE)
+
+func change_world3d_scene(scene_path, unload_mode = UnloadMode.DELETE):
+	current_world3d_scene = _change_scene(
+		scene_path,
+		world3d_container,
+		current_world3d_scene,
+		"world3d",
+		unload_mode
+	)
+
+func change_world2d_scene(scene_path, unload_mode = UnloadMode.DELETE):
+	current_world2d_scene = _change_scene(
+		scene_path,
+		world2d_container,
+		current_world2d_scene,
+		"world2d",
+		unload_mode
+	)
+
+func change_ui_scene(scene_path, unload_mode = UnloadMode.DELETE):
+	current_ui_scene = _change_scene(
+		scene_path,
+		ui_container,
+		current_ui_scene,
+		"ui",
+		unload_mode
+	)
+
+func _change_scene(scene_path, container, current_scene, layer_name, unload_mode):
+	if current_scene != null and is_instance_valid(current_scene):
+		current_scene = _unload_current_scene(current_scene, container, layer_name, unload_mode)
+	else:
+		current_scene = null
+
+	var packed_scene = load(scene_path)
+	if packed_scene == null:
+		push_error("Failed to load scene: " + str(scene_path))
+		_debug_print_state(layer_name)
+		return null
+
+	var new_scene = packed_scene.instance()
+	container.add_child(new_scene)
+	_debug_print_state(layer_name)
+	return new_scene
+
+func _unload_current_scene(current_scene, container, layer_name, unload_mode):
+	if unload_mode == UnloadMode.DELETE:
+		current_scene.queue_free()
+		return null
+
+	if unload_mode == UnloadMode.HIDE:
+		_set_scene_visibility(current_scene, false)
+		return current_scene
+
+	if unload_mode == UnloadMode.DETACH:
+		if current_scene.get_parent() == container:
+			container.remove_child(current_scene)
+		_set_detached_scene(layer_name, current_scene)
+		return null
+
+	current_scene.queue_free()
+	return null
+
+func _set_scene_visibility(scene_node, is_visible):
+	if scene_node is Spatial:
+		scene_node.visible = is_visible
+	elif scene_node is CanvasItem:
+		scene_node.visible = is_visible
+
+func _set_detached_scene(layer_name, scene_node):
+	var previous_scene = _get_detached_scene(layer_name)
+	if previous_scene != null and is_instance_valid(previous_scene):
+		previous_scene.queue_free()
+
+	if layer_name == "world3d":
+		detached_world3d_scene = scene_node
+	elif layer_name == "world2d":
+		detached_world2d_scene = scene_node
+	elif layer_name == "ui":
+		detached_ui_scene = scene_node
+
+func _get_detached_scene(layer_name):
+	if layer_name == "world3d":
+		return detached_world3d_scene
+	if layer_name == "world2d":
+		return detached_world2d_scene
+	if layer_name == "ui":
+		return detached_ui_scene
+	return null
+
+func _debug_print_state(layer_name):
+	print(
+		"[SceneController] layer=", layer_name,
+		" current3d=", _scene_name(current_world3d_scene),
+		" current2d=", _scene_name(current_world2d_scene),
+		" currentUI=", _scene_name(current_ui_scene),
+		" detached3d=", _scene_name(detached_world3d_scene),
+		" detached2d=", _scene_name(detached_world2d_scene),
+		" detachedUI=", _scene_name(detached_ui_scene)
+	)
+
+func _scene_name(scene_node):
+	if scene_node != null and is_instance_valid(scene_node):
+		return scene_node.name
+	return "null"

@@ -18,7 +18,9 @@ func pause():
 
 func quitToMainMenu():
 	get_tree().paused=false
-	get_tree().change_scene("res://gui/main_menu.tscn")
+	var controller = GameGlobal.get_game_controller()
+	if controller != null:
+		controller.change_world3d_scene("res://gui/main_menu.tscn")
 
 
 
@@ -42,5 +44,4 @@ func _on_GoToMainMenu_pressed():
 
 func _process(_delta):
 	testEsc()
-
 
