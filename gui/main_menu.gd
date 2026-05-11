@@ -7,12 +7,14 @@ onready var _menu_buttons = [
 ]
 
 onready var _loading_bar = $"WindowStartGame/LoadingBar"
+onready var _loading_label = $"WindowStartGame/LoadingLabel"
 
 const NEXT_SCENE_PATH = "res://gui/menu_character.tscn"
 
 var _focus_index = 0
 var _loader = null
 var _is_loading = false
+var _finish_requested = false
 
 
 # Called when the node enters the scene tree for the first time.
@@ -50,8 +52,14 @@ func _process(_delta):
 		return
 	if err == ERR_FILE_EOF:
 		_update_loading_bar()
-		_finish_loading()
+		if _loading_bar != null:
+			_loading_bar.value = 100.0
+		if not _finish_requested:
+			_finish_requested = true
+			set_process(false)
+			call_deferred("_finish_loading")
 		return
+	_log_loader_error(err)
 	push_error("Loading failed with error code: " + str(err))
 	_cancel_loading()
 
@@ -100,6 +108,10 @@ func _update_loading_bar():
 
 
 func _finish_loading():
+	_finish_requested = false
+	if _loader == null:
+		_set_loading_ui(false)
+		return
 	var packed = _loader.get_resource()
 	_loader = null
 	set_process(false)
@@ -120,10 +132,13 @@ func _cancel_loading():
 	_loader = null
 	set_process(false)
 	_is_loading = false
+	_finish_requested = false
 	_set_loading_ui(false)
 
 
 func _set_loading_ui(enabled):
+	if _loading_label != null:
+		_loading_label.visible = enabled
 	if _loading_bar != null:
 		_loading_bar.visible = enabled
 		if enabled:
@@ -131,6 +146,19 @@ func _set_loading_ui(enabled):
 	for button in _menu_buttons:
 		if button != null:
 			button.disabled = enabled
+
+
+func _log_loader_error(err):
+	var platform = OS.get_name()
+	var stage = 0
+	var total = 0
+	if _loader != null:
+		stage = _loader.get_stage()
+		total = _loader.get_stage_count()
+	if platform == "Vita":
+		print("[Vita][Loader] error=", err, " stage=", stage, "/", total, " path=", NEXT_SCENE_PATH)
+	else:
+		print("[Loader] error=", err, " stage=", stage, "/", total, " path=", NEXT_SCENE_PATH)
 
 
 
