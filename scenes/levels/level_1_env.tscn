@@ -1,0 +1,209 @@
+[gd_scene load_steps=26 format=2]
+
+[ext_resource path="res://assets/models/Arboles/arbol.tscn" type="PackedScene" id=1]
+[ext_resource path="res://assets/models/PSX Police Telephone Box/Police_Telephone_Box.tscn" type="PackedScene" id=2]
+[ext_resource path="res://assets/models/buildings_models/cyberpunk_building/BrickBuilding.tscn" type="PackedScene" id=3]
+[ext_resource path="res://assets/models/buildings_models/buildings/exports/SideWalk.tscn" type="PackedScene" id=4]
+[ext_resource path="res://assets/models/buildings_models/buildings/URBAN/URBAN/Roads/Road type 1/road_1_straight.glb" type="PackedScene" id=5]
+[ext_resource path="res://assets/models/buildings_models/buildings/URBAN/URBAN/department-bld-one.tscn" type="PackedScene" id=6]
+[ext_resource path="res://assets/models/buildings_models/buildings/URBAN/URBAN/department-bld-two.tscn" type="PackedScene" id=7]
+[ext_resource path="res://assets/models/Vehicles/PSX_Style_Cars_by_GGBot_(August2023)/Car 01/Car.obj" type="ArrayMesh" id=8]
+[ext_resource path="res://assets/models/Vehicles/PSX_Style_Cars_by_GGBot_(August2023)/Car 01/car.png" type="Texture" id=9]
+[ext_resource path="res://assets/models/buildings_models/buildings/PSXBuildings/PSXBuildings/PSX_Buildings.tscn" type="PackedScene" id=10]
+[ext_resource path="res://assets/models/buildings_models/buildings/URBAN/URBAN/Buildings Prebuild/flat_Lshape_vertical_stripes.glb" type="PackedScene" id=11]
+[ext_resource path="res://assets/models/buildings_models/buildings/URBAN/URBAN/Buildings Prebuild/flat_square_concrete.glb" type="PackedScene" id=12]
+[ext_resource path="res://assets/models/buildings_models/buildings/URBAN/URBAN/Buildings Prebuild/Hangar1.tscn" type="PackedScene" id=13]
+[ext_resource path="res://assets/models/buildings_models/buildings/URBAN/URBAN/Roads/Road type 1/road_1_corner.glb" type="PackedScene" id=14]
+[ext_resource path="res://assets/models/Vehicles/PSX_Style_Cars_by_GGBot_(August2023)/Car 02/Car2.obj" type="ArrayMesh" id=15]
+[ext_resource path="res://assets/models/Vehicles/PSX_Style_Cars_by_GGBot_(August2023)/Car 03/Car3.obj" type="ArrayMesh" id=16]
+[ext_resource path="res://assets/models/buildings_models/buildings/URBAN/URBAN/Walls & Fences/brick_fence/brick_wall_one_overhang.glb" type="PackedScene" id=17]
+[ext_resource path="res://assets/models/buildings_models/buildings/URBAN/URBAN/Walls & Fences/brick_fence/brick_wall_pole.glb" type="PackedScene" id=18]
+[ext_resource path="res://assets/models/Vehicles/PSX_Style_Cars_by_GGBot_(August2023)/Car 02/car2.png" type="Texture" id=19]
+[ext_resource path="res://assets/models/Vehicles/PSX_Style_Cars_by_GGBot_(August2023)/Car 03/car3_yellow.png" type="Texture" id=20]
+[ext_resource path="res://assets/models/buildings_models/buildings/URBAN/URBAN/Traffic lights/street_light.glb" type="PackedScene" id=21]
+
+[sub_resource type="SpatialMaterial" id=1]
+albedo_texture = ExtResource( 20 )
+
+[sub_resource type="ConvexPolygonShape" id=2]
+points = PoolVector3Array( -1.2, -0.6, -2.4, -1.2, -0.6, 2.4, -1.2, 0.6, -2.4, -1.2, 0.6, 2.4, 1.2, -0.6, -2.4, 1.2, -0.6, 2.4, 1.2, 0.6, -2.4, 1.2, 0.6, 2.4 )
+
+[sub_resource type="SpatialMaterial" id=3]
+albedo_texture = ExtResource( 9 )
+
+[sub_resource type="SpatialMaterial" id=4]
+albedo_texture = ExtResource( 19 )
+
+[sub_resource type="ConvexPolygonShape" id=5]
+points = PoolVector3Array( -1.2, -0.6, -2.4, -1.2, -0.6, 2.4, -1.2, 0.6, -2.4, -1.2, 0.6, 2.4, 1.2, -0.6, -2.4, 1.2, -0.6, 2.4, 1.2, 0.6, -2.4, 1.2, 0.6, 2.4 )
+
+[node name="Level 1 Env" type="Spatial"]
+
+[node name="Car3" type="MeshInstance" parent="."]
+transform = Transform( -0.349521, 0.0196706, -0.936722, 0, 0.99978, 0.0209948, 0.936929, 0.00733811, -0.349444, 11.2347, 0, -21.7825 )
+mesh = ExtResource( 16 )
+material/0 = SubResource( 1 )
+
+[node name="StaticBody" type="StaticBody" parent="Car3"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -0.201145, 0.680366, 0 )
+
+[node name="CollisionShape" type="CollisionShape" parent="Car3/StaticBody"]
+transform = Transform( 0.8, 0, 3.64251e-08, 0, 1.2, 0, -2.6491e-08, 0, 1.1, 0.175661, 0.548753, -0.20791 )
+shape = SubResource( 2 )
+
+[node name="road_1_straight3" parent="." instance=ExtResource( 5 )]
+transform = Transform( -4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -23.7684, 9.53674e-07, -16.5562 )
+
+[node name="road_1_straight4" parent="." instance=ExtResource( 5 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 16.2761, 9.53674e-07, 7.17164 )
+
+[node name="Police_Telephone_Box" parent="." instance=ExtResource( 2 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 9.6325, 0.2286, -3.62237 )
+
+[node name="Sidewalks" type="Spatial" parent="."]
+
+[node name="SideWalk12" parent="Sidewalks" instance=ExtResource( 4 )]
+transform = Transform( -1.80005, 0, 1.77028e-07, 0, 1.44, 0, -1.41629e-07, 0, -1.79997, 6.37172, -0.109703, 24.6015 )
+
+[node name="SideWalk13" parent="Sidewalks" instance=ExtResource( 4 )]
+transform = Transform( -2.70012, 0, 1.77026e-07, 0, 1.44, 0, -2.12447e-07, 0, -1.79995, -0.86, 0.09, 24.588 )
+
+[node name="SideWalk14" parent="Sidewalks" instance=ExtResource( 4 )]
+transform = Transform( 1.7999, 0, 0.0185034, 0, 0.09, 0, -0.0185034, 0, 1.7999, 5.201, 0.09, 22.682 )
+
+[node name="SideWalk16" parent="Sidewalks" instance=ExtResource( 4 )]
+transform = Transform( -1.8, 0, 1.77031e-07, 0, 1.44, 0, -1.41625e-07, 0, -1.8, -11.7217, 0.0573284, 24.3479 )
+
+[node name="SideWalk18" parent="Sidewalks" instance=ExtResource( 4 )]
+transform = Transform( 0.00456804, 0, 1.79999, 0, 0.09, 0, -1.79999, 0, 0.00456804, -24.0966, 0.205699, 1.02071 )
+
+[node name="SideWalk19" parent="Sidewalks" instance=ExtResource( 4 )]
+transform = Transform( -0.00216765, 0, 1.8, 0, 1.44, 0, -1.8, 0, -0.0021675, -24.1155, 0.185771, 13.0027 )
+
+[node name="SideWalk20" parent="Sidewalks" instance=ExtResource( 4 )]
+transform = Transform( -0.00973564, 0, 1.79998, 0, 1.44, 0, -2.69998, 0, -0.00892189, -24.1262, 0.251047, 23.8605 )
+
+[node name="SideWalk21" parent="Sidewalks" instance=ExtResource( 4 )]
+transform = Transform( -0.00216765, 0, 1.8, 0, 1.44, 0, -1.8, 0, -0.0021675, -24.1126, 0.18614, 7.00489 )
+
+[node name="SideWalk15" parent="Sidewalks" instance=ExtResource( 4 )]
+transform = Transform( -5.24537e-08, 0, -1.5, 0, 1.2, 0, 1.2, 0, -6.55671e-08, 24.3463, -0.0896928, 14.952 )
+
+[node name="BuildingWalls" type="Spatial" parent="."]
+
+[node name="BrickBuilding23" parent="BuildingWalls" instance=ExtResource( 3 )]
+transform = Transform( 0.00579307, 0, 0.999984, 0, 1, 0, -0.999984, 0, 0.00579307, -24.5837, 0, 6.01143 )
+
+[node name="BrickBuilding26" parent="BuildingWalls" instance=ExtResource( 3 )]
+transform = Transform( 0.00212783, 0, 0.999998, 0, 1, 0, -0.999998, 0, 0.00212783, -24.5709, 0, -1.69221 )
+
+[node name="BrickBuilding27" parent="BuildingWalls" instance=ExtResource( 3 )]
+transform = Transform( 0.00628217, 0, 0.99998, 0, 1, 0, -0.99998, 0, 0.00628217, -24.629, 0, 13.3008 )
+
+[node name="BrickBuilding16" parent="BuildingWalls" instance=ExtResource( 3 )]
+transform = Transform( 0.00657894, 0, 0.999979, 0, 1, 0, -0.999979, 0, 0.00657894, -24.5459, 0, -20.9684 )
+
+[node name="BrickBuilding18" parent="BuildingWalls" instance=ExtResource( 3 )]
+transform = Transform( 0.00706803, 0, 0.999975, 0, 1, 0, -0.999975, 0, 0.00706803, -24.597, 0, -17.3422 )
+
+[node name="BrickBuilding19" parent="BuildingWalls" instance=ExtResource( 3 )]
+transform = Transform( 0.00706803, 0, 0.999975, 0, 1, 0, -0.999975, 0, 0.00706803, -24.6513, 0, -9.56386 )
+
+[node name="BrickBuilding5" parent="BuildingWalls" instance=ExtResource( 3 )]
+transform = Transform( -4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 24.4984, 0, 1.90009 )
+
+[node name="BrickBuilding6" parent="BuildingWalls" instance=ExtResource( 3 )]
+transform = Transform( 0.656257, 0, -0.754538, 0, 1, 0, 0.754538, 0, 0.656257, 24.4806, -1.33203, -23.827 )
+
+[node name="BrickBuilding7" parent="BuildingWalls" instance=ExtResource( 3 )]
+transform = Transform( -4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 24.5484, 0, 9.04858 )
+
+[node name="BrickBuilding8" parent="BuildingWalls" instance=ExtResource( 3 )]
+transform = Transform( -4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 24.6017, 0, -5.59768 )
+
+[node name="Roads" type="Spatial" parent="."]
+
+[node name="Trees" type="Spatial" parent="."]
+
+[node name="Arbol2" parent="Trees" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 6.57, -0.087862, 4.44275 )
+
+[node name="Arbol4" parent="Trees" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 1.02288, 0, 6.07534 )
+
+[node name="Arbol3" parent="Trees" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -11.9199, 0, 8.19825 )
+
+[node name="Arbol" parent="Trees" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -5.46588, 0, -4.47885 )
+
+[node name="flat_Lshape_brick2" parent="." instance=ExtResource( 7 )]
+transform = Transform( 1, 0, -3.01992e-07, 0, 1, 0, 3.01992e-07, 0, 1, 21.6393, 0.0819664, 25.7625 )
+
+[node name="flat_Lshape_brick" parent="." instance=ExtResource( 7 )]
+transform = Transform( 0.00600366, 0, -0.999982, 0, 1, 0, 0.999982, 0, 0.00600366, -24.9962, 0, 15.6857 )
+
+[node name="deparment-bld-one" parent="." instance=ExtResource( 6 )]
+transform = Transform( -4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -26.6156, 0, -25.0246 )
+
+[node name="Car" type="MeshInstance" parent="."]
+transform = Transform( 0.974862, 0, -0.222808, 0, 1, 0, 0.222808, 0, 0.974862, 19.7503, 0, -0.8735 )
+mesh = ExtResource( 8 )
+material/0 = SubResource( 3 )
+
+[node name="StaticBody" type="StaticBody" parent="Car"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -0.201145, 0.680366, 0 )
+
+[node name="CollisionShape" type="CollisionShape" parent="Car/StaticBody"]
+transform = Transform( 0.8, 0, 3.64251e-08, 0, 1.2, 0, -2.6491e-08, 0, 1.1, 0.175661, 0.548753, -0.20791 )
+shape = SubResource( 2 )
+
+[node name="PSX_Buildings" parent="." instance=ExtResource( 10 )]
+transform = Transform( -4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 11.084, 0, 11.6402 )
+
+[node name="PSX_Buildings2" parent="." instance=ExtResource( 10 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 36.2728, 0, -27.6959 )
+
+[node name="flat_Lshape_vertical_stripes2" parent="." instance=ExtResource( 11 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -65.3208, -3.07316, -38.3578 )
+
+[node name="flat_Lshape_vertical_stripes" parent="." instance=ExtResource( 11 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -55.3407, 4.00717, -6.35177 )
+
+[node name="flat_square_concrete" parent="." instance=ExtResource( 12 )]
+transform = Transform( -4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -8.4575, 0, -24.7766 )
+
+[node name="Hangar1" parent="." instance=ExtResource( 13 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -19.9835, 0, -4.20178 )
+
+[node name="brick_wall_pole" parent="." instance=ExtResource( 18 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -21.1763, -4.76837e-07, 17.4826 )
+
+[node name="brick_wall_one_overhang2" parent="." instance=ExtResource( 17 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -25.4158, -0.030519, 17.4512 )
+
+[node name="brick_wall_one_overhang" parent="." instance=ExtResource( 17 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -20.939, -4.76837e-07, 17.5137 )
+
+[node name="Car2" type="MeshInstance" parent="."]
+transform = Transform( -0.0615363, 0, -0.998105, 0, 1, 0, 0.998105, 0, -0.0615363, -8.6555, -9.53674e-07, -20.2234 )
+mesh = ExtResource( 15 )
+material/0 = SubResource( 4 )
+
+[node name="StaticBody" type="StaticBody" parent="Car2"]
+
+[node name="CollisionShape" type="CollisionShape" parent="Car2/StaticBody"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.955574, 0 )
+shape = SubResource( 5 )
+
+[node name="street_light" parent="." instance=ExtResource( 21 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 9.97932, 0.220597, 0.275638 )
+
+[node name="road_1_straight" parent="." instance=ExtResource( 5 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 16.1909, 0, -8.80117 )
+
+[node name="road_1_corner" parent="." instance=ExtResource( 14 )]
+transform = Transform( -4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 24.2422, 9.53674e-07, -16.6607 )
+
+[node name="road_1_straight2" parent="." instance=ExtResource( 5 )]
+transform = Transform( -4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -7.7107, 0, -16.5204 )

@@ -34,6 +34,8 @@ var _character_transition_tween = null
 var _transition_old_instance = null
 var _pending_character_direction = 0
 var _pending_character_animate = true
+var _level_preload_loader = null
+var _level_preload_packed = null
 
 const CHARACTER_ORDER = ["AkimboBoy", "KineticChad", "FairyFire"]
 const CHARACTER_SCENES = {
@@ -120,6 +122,9 @@ func _process(_delta):
 	if _character_loader != null:
 		_poll_character_loader()
 		return
+	if _level_preload_loader != null:
+		_poll_level_preload()
+		return
 
 
 func _find_initial_focus_index():
@@ -161,7 +166,7 @@ func _begin_loading(scene_path, loading_bar, loading_label):
 
 
 func _update_process_state():
-	set_process(_loader != null or _character_loader != null)
+	set_process(_loader != null or _character_loader != null or _level_preload_loader != null)
 
 
 func _poll_scene_loader():
@@ -234,6 +239,56 @@ func _finish_character_loading():
 		return
 	_instance_character(instance)
 	_set_character_loading_ui(false)
+	_start_level_preload()
+
+
+func _start_level_preload():
+	if _level_preload_loader != null or _level_preload_packed != null:
+		return
+	var loader = ResourceLoader.load_interactive(LEVEL_SCENE_PATH)
+	if loader == null:
+		push_error("Failed to start level preload: " + str(LEVEL_SCENE_PATH))
+		return
+	_level_preload_loader = loader
+	_update_process_state()
+
+
+func _poll_level_preload():
+	var err = _level_preload_loader.poll()
+	if err == OK:
+		return
+	if err == ERR_FILE_EOF:
+		_level_preload_packed = _level_preload_loader.get_resource()
+		_level_preload_loader = null
+		_update_process_state()
+		return
+	push_error("Level preload failed with error code: " + str(err))
+	_level_preload_loader = null
+	_update_process_state()
+
+
+func _begin_loading_from_preload(loader, scene_path, loading_bar, loading_label):
+	if _character_loader != null:
+		_cancel_character_loading()
+	_loader = loader
+	_is_loading = true
+	_current_scene_path = scene_path
+	_active_loading_bar = loading_bar
+	_active_loading_label = loading_label
+	_set_loading_ui(true)
+	_update_loading_bar()
+	_update_process_state()
+
+
+func _load_level_from_packed(packed):
+	if packed == null or not (packed is PackedScene):
+		push_error("Level preload is not a PackedScene.")
+		return
+	var controller = GameGlobal.get_game_controller()
+	if controller != null and controller.has_method("change_world3d_scene_from_packed"):
+		controller.change_world3d_scene_from_packed(packed)
+	else:
+		var _error = get_tree().change_scene_to(packed)
 
 
 func _cancel_character_loading():
@@ -291,6 +346,9 @@ func _finish_loading():
 		controller.change_world3d_scene_from_packed(packed, unload_mode)
 	else:
 		var _error = get_tree().change_scene_to(packed)
+	_set_loading_ui(false)
+	_active_loading_bar = null
+	_active_loading_label = null
 	_update_process_state()
 
 
@@ -416,12 +474,10 @@ func _normalize_character_nodes(root):
 			if parts.size() == 0:
 				continue
 			var new_name = parts[parts.size() - 1]
-			var parent_path = ""
-			if parts.size() > 1:
-				var parent_parts = []
-				for i in range(parts.size() - 1):
-					parent_parts.append(parts[i])
-				parent_path = "/".join(parent_parts)
+			var parent_parts = []
+			for i in range(parts.size() - 1):
+				parent_parts.append(parts[i])
+			var parent_path = "/".join(parent_parts)
 			entries.append({"node": child, "new_name": new_name, "parent_path": parent_path, "depth": parts.size() - 1})
 	if entries.size() == 0:
 		return
@@ -505,5 +561,15 @@ func _on__Back_pressed():
 
 func _on_Start_Game_pressed():
 	if _is_loading:
+		return
+	if _level_preload_packed != null:
+		var packed = _level_preload_packed
+		_level_preload_packed = null
+		_load_level_from_packed(packed)
+		return
+	if _level_preload_loader != null:
+		var loader = _level_preload_loader
+		_level_preload_loader = null
+		_begin_loading_from_preload(loader, LEVEL_SCENE_PATH, _loading_bar, _loading_label)
 		return
 	_begin_loading(LEVEL_SCENE_PATH, _loading_bar, _loading_label)
