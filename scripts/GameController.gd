@@ -275,3 +275,14 @@ func _scene_path(scene_node):
 	if scene_node != null and is_instance_valid(scene_node):
 		return scene_node.filename
 	return ""
+
+func _print_memory():
+	var static_mb = OS.get_static_memory_usage() / 1024.0 / 1024.0
+	var dynamic_mb = OS.get_dynamic_memory_usage() / 1024.0 / 1024.0
+
+	var vram_mb = Performance.get_monitor(Performance.RENDER_VIDEO_MEM_USED) / 1024.0 / 1024.0
+	var tex_mb = Performance.get_monitor(Performance.RENDER_TEXTURE_MEM_USED) / 1024.0 / 1024.0
+	var vtx_mb = Performance.get_monitor(Performance.RENDER_VERTEX_MEM_USED) / 1024.0 / 1024.0
+
+	print("RAM static=", static_mb, "MB  dynamic=", dynamic_mb, "MB",
+		  "  VRAM=", vram_mb, "MB  tex=", tex_mb, "MB  vtx=", vtx_mb, "MB")

@@ -59,6 +59,7 @@ const CHARACTER_SLIDE_DISTANCE = 2.4
 const CHARACTER_SLIDE_TIME = 0.25
 const LEVEL_SCENE_PATH = "res://scenes/levels/level_1.tscn"
 const MAIN_MENU_SCENE_PATH = "res://gui/main_menu.tscn"
+const LOADING_SCENE_PATH = "res://gui/loading_screen.tscn"
 
 
 func _ready():
@@ -562,14 +563,9 @@ func _on__Back_pressed():
 func _on_Start_Game_pressed():
 	if _is_loading:
 		return
-	if _level_preload_packed != null:
-		var packed = _level_preload_packed
-		_level_preload_packed = null
-		_load_level_from_packed(packed)
-		return
-	if _level_preload_loader != null:
-		var loader = _level_preload_loader
-		_level_preload_loader = null
-		_begin_loading_from_preload(loader, LEVEL_SCENE_PATH, _loading_bar, _loading_label)
-		return
-	_begin_loading(LEVEL_SCENE_PATH, _loading_bar, _loading_label)
+	GameGlobal.set_pending_scene_path(LEVEL_SCENE_PATH)
+	var controller = GameGlobal.get_game_controller()
+	if controller != null and controller.has_method("change_world3d_scene"):
+		controller.change_world3d_scene(LOADING_SCENE_PATH)
+	else:
+		var _error = get_tree().change_scene(LOADING_SCENE_PATH)

@@ -10,6 +10,7 @@ onready var _loading_bar = $"WindowStartGame/LoadingBar"
 onready var _loading_label = $"WindowStartGame/LoadingLabel"
 
 const NEXT_SCENE_PATH = "res://gui/menu_character.tscn"
+const LOADING_SCENE_PATH = "res://gui/loading_screen.tscn"
 
 var _focus_index = 0
 var _loader = null
@@ -209,7 +210,11 @@ func _on_Start_pressed():
 		else:
 			var _error = get_tree().change_scene_to(_preload_packed)
 		return
-	_begin_loading(NEXT_SCENE_PATH)
+	GameGlobal.set_pending_scene_path(NEXT_SCENE_PATH)
+	if controller != null and controller.has_method("change_world3d_scene"):
+		controller.change_world3d_scene(LOADING_SCENE_PATH)
+	else:
+		var _error = get_tree().change_scene(LOADING_SCENE_PATH)
 		
 
 

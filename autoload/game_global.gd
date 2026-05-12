@@ -1,6 +1,7 @@
 extends Node
 
 var game_controller = null
+var pending_scene_path = ""
 
 func set_game_controller(controller):
 	game_controller = controller
@@ -14,3 +15,13 @@ func get_game_controller():
 		game_controller = null
 		return null
 	return game_controller
+
+
+func set_pending_scene_path(scene_path):
+	pending_scene_path = scene_path
+
+
+func consume_pending_scene_path():
+	var path = pending_scene_path
+	pending_scene_path = ""
+	return path
