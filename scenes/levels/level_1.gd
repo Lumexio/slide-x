@@ -4,11 +4,13 @@ extends Spatial
 const ENV_SCENE_PATH = "res://scenes/levels/level_1_env.tscn"
 
 onready var _env_anchor = $"EnvAnchor"
+onready var _env_loading_label = $"CanvasLayer/EnvLoadingLabel"
 var _env_loader = null
 
 
 func _ready():
 	set_process(false)
+	_set_env_loading_visible(false)
 	call_deferred("_start_env_load")
 
 
@@ -22,10 +24,12 @@ func _process(_delta):
 		var packed = _env_loader.get_resource()
 		_env_loader = null
 		_instance_env(packed)
+		_set_env_loading_visible(false)
 		set_process(false)
 		return
 	push_error("Env load failed with error code: " + str(err))
 	_env_loader = null
+	_set_env_loading_visible(false)
 	set_process(false)
 
 
@@ -35,7 +39,9 @@ func _start_env_load():
 	_env_loader = ResourceLoader.load_interactive(ENV_SCENE_PATH)
 	if _env_loader == null:
 		push_error("Failed to start env loading: " + str(ENV_SCENE_PATH))
+		_set_env_loading_visible(false)
 		return
+	_set_env_loading_visible(true)
 	set_process(true)
 
 
@@ -51,3 +57,8 @@ func _instance_env(packed):
 		_env_anchor.add_child(instance)
 	else:
 		add_child(instance)
+
+
+func _set_env_loading_visible(visible):
+	if _env_loading_label != null:
+		_env_loading_label.visible = visible
