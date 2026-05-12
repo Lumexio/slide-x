@@ -15,6 +15,9 @@ var _focus_index = 0
 var _loader = null
 var _is_loading = false
 var _finish_requested = false
+var _preload_loader = null
+var _preload_packed = null
+var _preload_started_msec = 0
 
 
 # Called when the node enters the scene tree for the first time.
@@ -22,7 +25,7 @@ func _ready():
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	_focus_index = 0
 	_apply_focus()
-	set_process(false)
+	_start_preload()
 	
 
 func _unhandled_input(event):
@@ -45,24 +48,37 @@ func _unhandled_input(event):
 
 
 func _process(_delta):
-	if _loader == null:
+	if _loader != null:
+		var err = _loader.poll()
+		if err == OK:
+			_update_loading_bar()
+			return
+		if err == ERR_FILE_EOF:
+			_update_loading_bar()
+			if _loading_bar != null:
+				_loading_bar.value = 100.0
+			if not _finish_requested:
+				_finish_requested = true
+				set_process(false)
+				call_deferred("_finish_loading")
+			return
+		_log_loader_error(err)
+		push_error("Loading failed with error code: " + str(err))
+		_cancel_loading()
 		return
-	var err = _loader.poll()
-	if err == OK:
-		_update_loading_bar()
-		return
-	if err == ERR_FILE_EOF:
-		_update_loading_bar()
-		if _loading_bar != null:
-			_loading_bar.value = 100.0
-		if not _finish_requested:
-			_finish_requested = true
+
+	if _preload_loader != null:
+		var preload_err = _preload_loader.poll()
+		if preload_err == OK:
+			return
+		if preload_err == ERR_FILE_EOF:
+			_preload_packed = _preload_loader.get_resource()
+			_preload_loader = null
 			set_process(false)
-			call_deferred("_finish_loading")
-		return
-	_log_loader_error(err)
-	push_error("Loading failed with error code: " + str(err))
-	_cancel_loading()
+			return
+		push_error("Preload failed with error code: " + str(preload_err))
+		_preload_loader = null
+		set_process(false)
 
 
 func _find_initial_focus_index():
@@ -87,14 +103,28 @@ func _cycle_focus(step):
 
 
 func _begin_loading(scene_path):
-	var loader = ResourceLoader.load_interactive(scene_path)
-	if loader == null:
-		push_error("Failed to start loading scene: " + str(scene_path))
-		return
-	_loader = loader
+	if _preload_loader != null:
+		_loader = _preload_loader
+		_preload_loader = null
+	else:
+		var loader = ResourceLoader.load_interactive(scene_path)
+		if loader == null:
+			push_error("Failed to start loading scene: " + str(scene_path))
+			return
+		_loader = loader
 	_is_loading = true
 	_set_loading_ui(true)
 	_update_loading_bar()
+	set_process(true)
+
+func _start_preload():
+	if _preload_loader != null or _preload_packed != null:
+		return
+	_preload_started_msec = OS.get_ticks_msec()
+	_preload_loader = ResourceLoader.load_interactive(NEXT_SCENE_PATH)
+	if _preload_loader == null:
+		push_error("Failed to start preload for scene: " + str(NEXT_SCENE_PATH))
+		return
 	set_process(true)
 
 
@@ -167,6 +197,17 @@ func _log_loader_error(err):
 
 func _on_Start_pressed():
 	if _is_loading:
+		return
+	var controller = GameGlobal.get_game_controller()
+	if controller != null and controller.has_method("has_detached_scene"):
+		if controller.has_detached_scene("world3d", NEXT_SCENE_PATH):
+			controller.change_world3d_scene(NEXT_SCENE_PATH)
+			return
+	if _preload_packed != null:
+		if controller != null and controller.has_method("change_world3d_scene_from_packed"):
+			controller.change_world3d_scene_from_packed(_preload_packed)
+		else:
+			var _error = get_tree().change_scene_to(_preload_packed)
 		return
 	_begin_loading(NEXT_SCENE_PATH)
 		

@@ -21,6 +21,9 @@ var current_ui_scene = null
 var detached_world3d_scene = null
 var detached_world2d_scene = null
 var detached_ui_scene = null
+var detached_world3d_scene_path = ""
+var detached_world2d_scene_path = ""
+var detached_ui_scene_path = ""
 
 func _ready():
 	if not world3d_path:
@@ -85,10 +88,28 @@ func change_ui_scene(scene_path, unload_mode = UnloadMode.DELETE):
 		unload_mode
 	)
 
+func has_detached_scene(layer_name, scene_path):
+	var detached_scene = _get_detached_scene(layer_name)
+	if detached_scene == null or not is_instance_valid(detached_scene):
+		return false
+	return _get_detached_scene_path(layer_name) == scene_path
+
 func _change_scene(scene_path, container, current_scene, layer_name, unload_mode):
 	if container == null:
 		push_error("GameController: container for layer '" + layer_name + "' is null; cannot change scene.")
 		return current_scene
+
+	var detached_scene = _get_detached_scene(layer_name)
+	if detached_scene != null and is_instance_valid(detached_scene):
+		if _get_detached_scene_path(layer_name) == scene_path:
+			if current_scene != null and is_instance_valid(current_scene):
+				_unload_current_scene(current_scene, container, layer_name, unload_mode)
+			if detached_scene.get_parent() == null:
+				container.add_child(detached_scene)
+			_set_scene_visibility(detached_scene, true)
+			_clear_detached_scene(layer_name)
+			_debug_print_state(layer_name)
+			return detached_scene
 
 	# Load and validate the new scene BEFORE unloading the old one.
 	# This prevents a blank screen when the load fails.
@@ -179,6 +200,7 @@ func _set_detached_scene(layer_name, scene_node):
 	var previous_scene = _get_detached_scene(layer_name)
 	if previous_scene != null and is_instance_valid(previous_scene):
 		previous_scene.queue_free()
+	_set_detached_scene_path(layer_name, _scene_path(scene_node))
 
 	if layer_name == "world3d":
 		detached_world3d_scene = scene_node
@@ -188,6 +210,38 @@ func _set_detached_scene(layer_name, scene_node):
 		detached_ui_scene = scene_node
 	else:
 		push_error("Unknown layer name for detached scene: " + str(layer_name))
+
+func _clear_detached_scene(layer_name):
+	if layer_name == "world3d":
+		detached_world3d_scene = null
+		detached_world3d_scene_path = ""
+	elif layer_name == "world2d":
+		detached_world2d_scene = null
+		detached_world2d_scene_path = ""
+	elif layer_name == "ui":
+		detached_ui_scene = null
+		detached_ui_scene_path = ""
+	else:
+		push_error("Unknown layer name while clearing detached scene: " + str(layer_name))
+
+func _set_detached_scene_path(layer_name, scene_path):
+	if layer_name == "world3d":
+		detached_world3d_scene_path = scene_path
+	elif layer_name == "world2d":
+		detached_world2d_scene_path = scene_path
+	elif layer_name == "ui":
+		detached_ui_scene_path = scene_path
+	else:
+		push_error("Unknown layer name for detached scene path: " + str(layer_name))
+
+func _get_detached_scene_path(layer_name):
+	if layer_name == "world3d":
+		return detached_world3d_scene_path
+	elif layer_name == "world2d":
+		return detached_world2d_scene_path
+	elif layer_name == "ui":
+		return detached_ui_scene_path
+	return ""
 
 func _get_detached_scene(layer_name):
 	if layer_name == "world3d":
@@ -216,3 +270,8 @@ func _scene_name(scene_node):
 	if scene_node != null and is_instance_valid(scene_node):
 		return scene_node.name
 	return "null"
+
+func _scene_path(scene_node):
+	if scene_node != null and is_instance_valid(scene_node):
+		return scene_node.filename
+	return ""
