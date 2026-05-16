@@ -1,66 +1,66 @@
 extends KinematicBody
 
-onready var camera_mount = $camera_mount
-onready var camera = $camera_mount/Camera
-onready var camera_ray = $camera_mount/CameraRay
-onready var animation_player = $"visuals/meele-guy/AnimationPlayer"
-onready var visuals = $visuals
+onready var camera_mount: Spatial = $camera_mount
+onready var camera: Camera = $camera_mount/Camera
+onready var camera_ray: RayCast = $camera_mount/CameraRay
+onready var animation_player: AnimationPlayer = $"visuals/meele-guy/AnimationPlayer"
+onready var visuals: Spatial = $visuals
 
 # Movement settings
-export var walking_speed = 3.0
-export var running_speed = 7.0
-export var JUMP_VELOCITY = 8.0
-var gravity = 13.5
+export(float) var walking_speed := 3.0
+export(float) var running_speed := 7.0
+export(float) var JUMP_VELOCITY := 8.0
+var gravity := 13.5
 
 # Look control settings
-export var mouse_look_enabled = true
-export var mouse_sensitivity = 0.1
-export var stick_look_speed = 2.5
-export var stick_deadzone = 0.2
-export var left_stick_x_axis = 0
-export var left_stick_y_axis = 1
-export var right_stick_x_axis = 2
-export var right_stick_y_axis = 3
-export var min_pitch_degrees = -65.0
-export var max_pitch_degrees = 65.0
-export var invert_look_y = false
-export var camera_collision_margin = 0.2
-export var camera_lag_speed = 12.0
-export var look_smooth_speed = 12.0
-export var locomotion_blend_time = 0.12
-export var attack_blend_time = 0.06
-export var combo_shake_strength = 0.05
-export var combo_shake_decay = 8.0
-export var combo_roll_degrees = 2.5
-export var combo_rumble_strong = 0.9
-export var combo_rumble_weak = 0.4
-export var combo_rumble_time = 0.12
+export(bool) var mouse_look_enabled := true
+export(float) var mouse_sensitivity := 0.1
+export(float) var stick_look_speed := 2.5
+export(float) var stick_deadzone := 0.2
+export(int) var left_stick_x_axis := 0
+export(int) var left_stick_y_axis := 1
+export(int) var right_stick_x_axis := 2
+export(int) var right_stick_y_axis := 3
+export(float) var min_pitch_degrees := -65.0
+export(float) var max_pitch_degrees := 65.0
+export(bool) var invert_look_y := false
+export(float) var camera_collision_margin := 0.2
+export(float) var camera_lag_speed := 12.0
+export(float) var look_smooth_speed := 12.0
+export(float) var locomotion_blend_time := 0.12
+export(float) var attack_blend_time := 0.06
+export(float) var combo_shake_strength := 0.05
+export(float) var combo_shake_decay := 8.0
+export(float) var combo_roll_degrees := 2.5
+export(float) var combo_rumble_strong := 0.9
+export(float) var combo_rumble_weak := 0.4
+export(float) var combo_rumble_time := 0.12
 
 # --- Independent Dash Settings ---
-export var HARD_PUNCH_DASH_SPEED = 30.0  # Very fast speed
-export var HARD_PUNCH_DASH_TIME = 0.15   # Very short time (determines distance)
-export var TORNADO_KICK_DASH_SPEED = 15.0
-export var TORNADO_KICK_DASH_TIME = 0.1
+export(float) var HARD_PUNCH_DASH_SPEED := 30.0  # Very fast speed
+export(float) var HARD_PUNCH_DASH_TIME := 0.15   # Very short time (determines distance)
+export(float) var TORNADO_KICK_DASH_SPEED := 15.0
+export(float) var TORNADO_KICK_DASH_TIME := 0.1
 
-var velocity = Vector3.ZERO
-var is_attacking = false
-var current_attack_dash_speed = 0.0 
-var _pitch = 0.0
-var _target_yaw = 0.0
-var _target_pitch = 0.0
-var _camera_default_offset = Vector3.ZERO
-var _camera_base_rotation = Vector3.ZERO
-var _shake_amount = 0.0
+var velocity := Vector3.ZERO
+var is_attacking := false
+var current_attack_dash_speed := 0.0
+var _pitch := 0.0
+var _target_yaw := 0.0
+var _target_pitch := 0.0
+var _camera_default_offset := Vector3.ZERO
+var _camera_base_rotation := Vector3.ZERO
+var _shake_amount := 0.0
 
 # --- Double Jump Variables ---
-var jump_count = 0
-export var extra_jumps = 1 
+var jump_count := 0
+export(int) var extra_jumps := 1
 
 # Combo Counters
-var punch_count = 0
-var kick_count = 0
+var punch_count := 0
+var kick_count := 0
 
-func _ready():
+func _ready() -> void:
 	if OS.get_name() == "Vita":
 		mouse_look_enabled = false
 		stick_look_speed = 2.0
@@ -81,7 +81,7 @@ func _ready():
 		camera_ray.exclude_parent = true
 		camera_ray.add_exception(self)
 
-func _input(event):
+func _input(event: InputEvent) -> void:
 	if not mouse_look_enabled:
 		return
 	if event is InputEventMouseMotion:
@@ -91,7 +91,7 @@ func _input(event):
 			pitch = -pitch
 		_apply_look(yaw, pitch)
 
-func _physics_process(delta):
+func _physics_process(delta: float) -> void:
 	_apply_stick_look(delta)
 	_update_look_smoothing(delta)
 
@@ -166,7 +166,7 @@ func _physics_process(delta):
 
 # --- Sequential Attack Handlers ---
 
-func handle_punch_logic():
+func handle_punch_logic() -> void:
 	punch_count += 1
 	if punch_count <= 2:
 		_trigger_combo_feedback(0.5)
@@ -180,7 +180,7 @@ func handle_punch_logic():
 		play_action("punch-hard", HARD_PUNCH_DASH_SPEED, HARD_PUNCH_DASH_TIME, 2)
 		punch_count = 0
 
-func handle_kick_logic():
+func handle_kick_logic() -> void:
 	kick_count += 1
 	if kick_count <= 3:
 		_trigger_combo_feedback(0.6)
@@ -190,7 +190,7 @@ func handle_kick_logic():
 		play_action("kick-tornado", TORNADO_KICK_DASH_SPEED, TORNADO_KICK_DASH_TIME)
 		kick_count = 0
 
-func handle_elbow_logic():
+func handle_elbow_logic() -> void:
 	_trigger_combo_feedback(0.8)
 	play_action("punch-elbow", 0, 0, 1.0)
 	punch_count = 0
@@ -198,7 +198,7 @@ func handle_elbow_logic():
 
 # --- Helper Functions ---
 
-func get_input_direction():
+func get_input_direction() -> Vector3:
 	var input = Vector3.ZERO
 	input.x = Input.get_action_strength("ui_right") - Input.get_action_strength("ui_left")
 	input.z = Input.get_action_strength("ui_down") - Input.get_action_strength("ui_up")
@@ -206,17 +206,17 @@ func get_input_direction():
 		input = input.normalized()
 	return (transform.basis.x * input.x + transform.basis.z * input.z)
 
-func _apply_look(yaw_delta, pitch_delta):
+func _apply_look(yaw_delta: float, pitch_delta: float) -> void:
 	_target_yaw += yaw_delta
 	_target_pitch = clamp(_target_pitch + pitch_delta, deg2rad(min_pitch_degrees), deg2rad(max_pitch_degrees))
 
-func _update_look_smoothing(delta):
+func _update_look_smoothing(delta: float) -> void:
 	var t = clamp(look_smooth_speed * delta, 0.0, 1.0)
 	rotation.y = lerp_angle(rotation.y, _target_yaw, t)
 	_pitch = lerp(_pitch, _target_pitch, t)
 	camera_mount.rotation.x = _pitch
 
-func _apply_stick_look(delta):
+func _apply_stick_look(delta: float) -> void:
 	var joy_id = _get_primary_joypad()
 	if joy_id < 0:
 		return
@@ -230,7 +230,7 @@ func _apply_stick_look(delta):
 		pitch = -pitch
 	_apply_look(yaw, pitch)
 
-func _update_camera_collision(delta):
+func _update_camera_collision(delta: float) -> void:
 	if not camera or not camera_ray:
 		return
 	var target_local = _camera_default_offset
@@ -255,11 +255,11 @@ func _update_camera_collision(delta):
 	camera.translation = base_local + shake_offset
 	camera.rotation = Vector3(_camera_base_rotation.x, _camera_base_rotation.y, roll)
 
-func _trigger_combo_feedback(strength_scale = 1.0):
+func _trigger_combo_feedback(strength_scale := 1.0) -> void:
 	_shake_amount = max(_shake_amount, combo_shake_strength * strength_scale)
 	_start_combo_rumble(strength_scale)
 
-func _start_combo_rumble(strength_scale):
+func _start_combo_rumble(strength_scale: float) -> void:
 	var joy_id = _get_primary_joypad()
 	if joy_id < 0:
 		return
@@ -267,22 +267,22 @@ func _start_combo_rumble(strength_scale):
 	var weak = clamp(combo_rumble_weak * strength_scale, 0.0, 1.0)
 	Input.start_joy_vibration(joy_id, weak, strong, combo_rumble_time)
 
-func _randf_range(min_val, max_val):
+func _randf_range(min_val: float, max_val: float) -> float:
 	return rand_range(min_val, max_val)
 
-func _apply_deadzone(value, deadzone):
+func _apply_deadzone(value: float, deadzone: float) -> float:
 	if abs(value) < deadzone:
 		return 0.0
 	return value
 
-func _get_primary_joypad():
+func _get_primary_joypad() -> int:
 	var pads = Input.get_connected_joypads()
 	if pads.size() == 0:
 		return -1
 	return pads[0]
 
 # Updated to handle independent Dash Time
-func play_action(anim_name, dash_speed = 0.0, dash_time = 0.0, anim_speed = 1.0):
+func play_action(anim_name: String, dash_speed := 0.0, dash_time := 0.0, anim_speed := 1.0):
 	is_attacking = true
 	
 	# Set the speed before playing
@@ -304,6 +304,6 @@ func play_action(anim_name, dash_speed = 0.0, dash_time = 0.0, anim_speed = 1.0)
 	current_attack_dash_speed = 0.0
 	is_attacking = false
 
-func play_anim_if_not(anim_name):
+func play_anim_if_not(anim_name: String) -> void:
 	if animation_player.current_animation != anim_name:
 		animation_player.play(anim_name, locomotion_blend_time)

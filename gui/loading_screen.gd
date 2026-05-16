@@ -1,20 +1,20 @@
 extends Control
 
 
-export(String, FILE, "*.tscn") var target_scene_path = ""
-export(int) var time_budget_msec = 8
+export(String, FILE, "*.tscn") var target_scene_path := ""
+export(int) var time_budget_msec := 8
 
-onready var progress = $"ProgressBar"
-onready var status = $"StatusLabel"
+onready var progress: ProgressBar = $"ProgressBar"
+onready var status: Label = $"StatusLabel"
 
-var loader = null
+var loader: ResourceInteractiveLoader = null
 
 
-func set_target_scene(path):
+func set_target_scene(path: String) -> void:
 	target_scene_path = path
 
 
-func _ready():
+func _ready() -> void:
 	if target_scene_path == "":
 		if GameGlobal != null and GameGlobal.has_method("consume_pending_scene_path"):
 			target_scene_path = GameGlobal.consume_pending_scene_path()
@@ -32,7 +32,7 @@ func _ready():
 	set_process(true)
 
 
-func _process(_delta):
+func _process(_delta: float) -> void:
 	if loader == null:
 		return
 	var start = OS.get_ticks_msec()
@@ -59,7 +59,7 @@ func _process(_delta):
 			return
 
 
-func _swap_scene(packed):
+func _swap_scene(packed: PackedScene) -> void:
 	if packed == null or not (packed is PackedScene):
 		push_error("Loaded resource is not a PackedScene.")
 		return

@@ -1,27 +1,27 @@
 extends Camera
 
-export(float, 0.0, 1.0) var sensitivity = 0.25
+export(float, 0.0, 1.0) var sensitivity := 0.25
 
 # Mouse state
-var _mouse_position = Vector2(0.0, 0.0)
-var _total_pitch = 0.0
+var _mouse_position := Vector2.ZERO
+var _total_pitch := 0.0
 
 # Movement state
-var _direction = Vector3(0.0, 0.0, 0.0)
-var _velocity = Vector3(0.0, 0.0, 0.0)
-var _acceleration = 30
-var _deceleration = -10
-var _vel_multiplier = 4
+var _direction := Vector3.ZERO
+var _velocity := Vector3.ZERO
+var _acceleration := 30.0
+var _deceleration := -10.0
+var _vel_multiplier := 4.0
 
 # Keyboard state
-var _w = false
-var _s = false
-var _a = false
-var _d = false
-var _q = false
-var _e = false
+var _w := false
+var _s := false
+var _a := false
+var _d := false
+var _q := false
+var _e := false
 
-func _input(event):
+func _input(event: InputEvent) -> void:
 	# Receives mouse motion
 	if event is InputEventMouseMotion:
 		_mouse_position = event.relative
@@ -53,20 +53,21 @@ func _input(event):
 				_e = event.pressed
 
 # Updates mouselook and movement every frame
-func _process(delta):
+func _process(delta: float) -> void:
 	_update_mouselook()
 	_update_movement(delta)
 
 # Updates camera movement
-func _update_movement(delta):
+func _update_movement(delta: float) -> void:
 	# Computes desired direction from key states
-	_direction = Vector3(_d as float - _a as float, 
-						 _e as float - _q as float,
-						 _s as float - _w as float)
+	var dir_x := float(_d) - float(_a)
+	var dir_y := float(_e) - float(_q)
+	var dir_z := float(_s) - float(_w)
+	_direction = Vector3(dir_x, dir_y, dir_z)
 	
 	# Computes the change in velocity due to desired direction and "drag"
 	# The "drag" is a constant acceleration on the camera to bring it's velocity to 0
-	var offset = _direction.normalized() * _acceleration * _vel_multiplier * delta \
+	var offset: Vector3 = _direction.normalized() * _acceleration * _vel_multiplier * delta \
 		+ _velocity.normalized() * _deceleration * _vel_multiplier * delta
 	
 	# Checks if we should bother translating the camera
@@ -82,7 +83,7 @@ func _update_movement(delta):
 		translate(_velocity * delta)
 
 # Updates mouse look 
-func _update_mouselook():
+func _update_mouselook() -> void:
 	# Only rotates mouse if the mouse is captured
 	if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
 		_mouse_position *= sensitivity

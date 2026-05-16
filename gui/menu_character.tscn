@@ -135,6 +135,8 @@ script = ExtResource( 1 )
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource( 1 )
 
+[node name="BakedLightmap" type="BakedLightmap" parent="."]
+
 [node name="SpotLight" type="SpotLight" parent="."]
 transform = Transform( 0.9901, -0.111571, 0.0851726, -0.134682, -0.584209, 0.80035, -0.0395371, -0.803898, -0.593452, 0.341853, 3.06501, -0.903733 )
 light_color = Color( 0.933333, 0.207843, 0.172549, 1 )
@@ -144,7 +146,9 @@ shadow_enabled = true
 
 [node name="ClippedCamera" type="ClippedCamera" parent="."]
 transform = Transform( -0.984178, 0.132189, -0.117982, 0.0407608, 0.816935, 0.575288, 0.17243, 0.561377, -0.809397, -0.300132, 1.53862, -0.657008 )
-fov = 111.0
+fov = 106.2
+near = 0.31
+far = 1.7
 
 [node name="TaskBar" type="Panel" parent="."]
 anchor_top = 1.0

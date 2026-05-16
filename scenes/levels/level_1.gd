@@ -3,18 +3,18 @@ extends Spatial
 
 const ENV_SCENE_PATH = "res://scenes/levels/level_1_env.tscn"
 
-onready var _env_anchor = $"EnvAnchor"
-onready var _env_loading_label = $"CanvasLayer/EnvLoadingLabel"
-var _env_loader = null
+onready var _env_anchor: Spatial = $"EnvAnchor"
+onready var _env_loading_label: Label = $"CanvasLayer/EnvLoadingLabel"
+var _env_loader: ResourceInteractiveLoader = null
 
 
-func _ready():
+func _ready() -> void:
 	set_process(false)
 	_set_env_loading_visible(false)
 	call_deferred("_start_env_load")
 
 
-func _process(_delta):
+func _process(_delta: float) -> void:
 	if _env_loader == null:
 		return
 	var err = _env_loader.poll()
@@ -33,7 +33,7 @@ func _process(_delta):
 	set_process(false)
 
 
-func _start_env_load():
+func _start_env_load() -> void:
 	if _env_loader != null:
 		return
 	_env_loader = ResourceLoader.load_interactive(ENV_SCENE_PATH)
@@ -45,7 +45,7 @@ func _start_env_load():
 	set_process(true)
 
 
-func _instance_env(packed):
+func _instance_env(packed: PackedScene) -> void:
 	if packed == null or not (packed is PackedScene):
 		push_error("Env resource is not a PackedScene.")
 		return
@@ -59,6 +59,6 @@ func _instance_env(packed):
 		add_child(instance)
 
 
-func _set_env_loading_visible(visible):
+func _set_env_loading_visible(visible: bool) -> void:
 	if _env_loading_label != null:
 		_env_loading_label.visible = visible

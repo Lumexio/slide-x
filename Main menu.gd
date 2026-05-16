@@ -4,7 +4,7 @@ extends Node2D
 
 
 # Called when the node enters the scene tree for the first time.
-func _ready():
+func _ready() -> void:
 	pass # Replace with function body.
 
 
@@ -13,9 +13,9 @@ func _ready():
 #	pass
 
 
-func _on_Start_pressed():
+func _on_Start_pressed() -> void:
 	get_tree().change_scene("res://Main menu/Menu_character.tscn")
 
 
-func _on_Quit_pressed():
+func _on_Quit_pressed() -> void:
 	get_tree().quit()

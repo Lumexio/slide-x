@@ -1,35 +1,35 @@
 extends Spatial
 
 
-onready var _menu_buttons = [
+onready var _menu_buttons: Array = [
 	$"TaskBar/Quit",
 	$"WindowStartGame/StartButton",
 ]
 
-onready var _loading_bar = $"WindowStartGame/LoadingBar"
-onready var _loading_label = $"WindowStartGame/LoadingLabel"
+onready var _loading_bar: ProgressBar = $"WindowStartGame/LoadingBar"
+onready var _loading_label: Label = $"WindowStartGame/LoadingLabel"
 
 const NEXT_SCENE_PATH = "res://gui/menu_character.tscn"
 const LOADING_SCENE_PATH = "res://gui/loading_screen.tscn"
 
-var _focus_index = 0
-var _loader = null
-var _is_loading = false
-var _finish_requested = false
-var _preload_loader = null
-var _preload_packed = null
-var _preload_started_msec = 0
+var _focus_index := 0
+var _loader: ResourceInteractiveLoader = null
+var _is_loading := false
+var _finish_requested := false
+var _preload_loader: ResourceInteractiveLoader = null
+var _preload_packed: PackedScene = null
+var _preload_started_msec := 0
 
 
 # Called when the node enters the scene tree for the first time.
-func _ready():
+func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	_focus_index = 0
 	_apply_focus()
 	_start_preload()
 	
 
-func _unhandled_input(event):
+func _unhandled_input(event: InputEvent) -> void:
 	if _is_loading:
 		return
 	var move = 0
@@ -48,7 +48,7 @@ func _unhandled_input(event):
 		get_tree().set_input_as_handled()
 
 
-func _process(_delta):
+func _process(_delta: float) -> void:
 	if _loader != null:
 		var err = _loader.poll()
 		if err == OK:
@@ -82,11 +82,11 @@ func _process(_delta):
 		set_process(false)
 
 
-func _find_initial_focus_index():
+func _find_initial_focus_index() -> int:
 	return 0
 
 
-func _apply_focus():
+func _apply_focus() -> void:
 	if _menu_buttons.size() == 0:
 		return
 	var target = _menu_buttons[_focus_index]
@@ -94,7 +94,7 @@ func _apply_focus():
 		target.grab_focus()
 
 
-func _cycle_focus(step):
+func _cycle_focus(step: int) -> void:
 	if _menu_buttons.size() == 0:
 		return
 	_focus_index = (_focus_index + step) % _menu_buttons.size()
@@ -103,7 +103,7 @@ func _cycle_focus(step):
 	_apply_focus()
 
 
-func _begin_loading(scene_path):
+func _begin_loading(scene_path: String) -> void:
 	if _preload_loader != null:
 		_loader = _preload_loader
 		_preload_loader = null
@@ -118,7 +118,7 @@ func _begin_loading(scene_path):
 	_update_loading_bar()
 	set_process(true)
 
-func _start_preload():
+func _start_preload() -> void:
 	if _preload_loader != null or _preload_packed != null:
 		return
 	_preload_started_msec = OS.get_ticks_msec()
@@ -129,7 +129,7 @@ func _start_preload():
 	set_process(true)
 
 
-func _update_loading_bar():
+func _update_loading_bar() -> void:
 	if _loading_bar == null or _loader == null:
 		return
 	var total = _loader.get_stage_count()
@@ -139,7 +139,7 @@ func _update_loading_bar():
 	_loading_bar.value = clamp(progress * 100.0, 0.0, 100.0)
 
 
-func _finish_loading():
+func _finish_loading() -> void:
 	_finish_requested = false
 	if _loader == null:
 		_set_loading_ui(false)
@@ -160,7 +160,7 @@ func _finish_loading():
 		var _error = get_tree().change_scene_to(packed)
 
 
-func _cancel_loading():
+func _cancel_loading() -> void:
 	_loader = null
 	set_process(false)
 	_is_loading = false
@@ -168,7 +168,7 @@ func _cancel_loading():
 	_set_loading_ui(false)
 
 
-func _set_loading_ui(enabled):
+func _set_loading_ui(enabled: bool) -> void:
 	if _loading_label != null:
 		_loading_label.visible = enabled
 	if _loading_bar != null:
@@ -180,7 +180,7 @@ func _set_loading_ui(enabled):
 			button.disabled = enabled
 
 
-func _log_loader_error(err):
+func _log_loader_error(err: int) -> void:
 	var platform = OS.get_name()
 	var stage = 0
 	var total = 0
@@ -196,7 +196,7 @@ func _log_loader_error(err):
 
 
 
-func _on_Start_pressed():
+func _on_Start_pressed() -> void:
 	if _is_loading:
 		return
 	var controller = GameGlobal.get_game_controller()
@@ -218,5 +218,5 @@ func _on_Start_pressed():
 		
 
 
-func _on_Quit_pressed():
+func _on_Quit_pressed() -> void:
 	get_tree().quit()

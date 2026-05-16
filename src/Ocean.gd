@@ -1,8 +1,8 @@
 tool
 extends MeshInstance
 
-func _ready():
-	var noise = OpenSimplexNoise.new()
+func _ready() -> void:
+	var noise := OpenSimplexNoise.new()
 	noise.seed = randi()
 	noise.octaves = 4
 	noise.period = 20.0

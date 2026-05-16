@@ -1,41 +1,41 @@
 extends Spatial
 
 
-onready var _menu_buttons = [
+onready var _menu_buttons: Array = [
 	$"TaskBar/FairyFire",
 	$"TaskBar/AkimboBoy",
 	$"TaskBar/Kinetic Chad",
 	$"TaskBar/<- Back",
 	$"Start Game",
 ]
-onready var _loading_bar = $"WindowStartGame/LoadingBar"
-onready var _loading_label = $"WindowStartGame/LoadingLabel"
-onready var _back_loading_bar = $"TaskBar/BackLoadingBar"
-onready var _back_loading_label = $"TaskBar/BackLoadingLabel"
-onready var _character_loading_label = $"TaskBar/CharacterLoadingLabel"
-onready var _character_anchor = $"CharacterAnchor"
+onready var _loading_bar: ProgressBar = $"WindowStartGame/LoadingBar"
+onready var _loading_label: Label = $"WindowStartGame/LoadingLabel"
+onready var _back_loading_bar: ProgressBar = $"TaskBar/BackLoadingBar"
+onready var _back_loading_label: Label = $"TaskBar/BackLoadingLabel"
+onready var _character_loading_label: Label = $"TaskBar/CharacterLoadingLabel"
+onready var _character_anchor: Spatial = $"CharacterAnchor"
 
-var current_character = ""
-var _focus_index = 0
-var _loader = null
-var _is_loading = false
-var _finish_requested = false
-var _active_loading_bar = null
-var _active_loading_label = null
-var _current_scene_path = ""
-var _character_loader = null
-var _character_finish_requested = false
-var _character_scene_path = ""
-var _character_instance = null
-var _character_anim_player = null
-var _available_anim_names = []
-var _anim_index = 0
-var _character_transition_tween = null
-var _transition_old_instance = null
-var _pending_character_direction = 0
-var _pending_character_animate = true
-var _level_preload_loader = null
-var _level_preload_packed = null
+var current_character := ""
+var _focus_index := 0
+var _loader: ResourceInteractiveLoader = null
+var _is_loading := false
+var _finish_requested := false
+var _active_loading_bar: ProgressBar = null
+var _active_loading_label: Label = null
+var _current_scene_path := ""
+var _character_loader: ResourceInteractiveLoader = null
+var _character_finish_requested := false
+var _character_scene_path := ""
+var _character_instance: Spatial = null
+var _character_anim_player: AnimationPlayer = null
+var _available_anim_names: Array = []
+var _anim_index := 0
+var _character_transition_tween: Tween = null
+var _transition_old_instance: Spatial = null
+var _pending_character_direction := 0
+var _pending_character_animate := true
+var _level_preload_loader: ResourceInteractiveLoader = null
+var _level_preload_packed: PackedScene = null
 
 const CHARACTER_ORDER = ["AkimboBoy", "KineticChad", "FairyFire"]
 const CHARACTER_SCENES = {
@@ -57,12 +57,14 @@ const PREVIEW_ANIMATIONS = [
 ]
 const CHARACTER_SLIDE_DISTANCE = 2.4
 const CHARACTER_SLIDE_TIME = 0.25
+const CHARACTER_VISIBILITY_RANGE_BEGIN = 0.0
+const CHARACTER_VISIBILITY_RANGE_END = 12.0
 const LEVEL_SCENE_PATH = "res://scenes/levels/level_1.tscn"
 const MAIN_MENU_SCENE_PATH = "res://gui/main_menu.tscn"
 const LOADING_SCENE_PATH = "res://gui/loading_screen.tscn"
 
 
-func _ready():
+func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	_select_character("AkimboBoy", false)
 	_focus_index = _find_initial_focus_index()
@@ -70,7 +72,7 @@ func _ready():
 	_update_process_state()
 
 
-func _select_character(character_name, animate = true):
+func _select_character(character_name: String, animate: bool = true) -> void:
 	var old_index = CHARACTER_ORDER.find(current_character)
 	var new_index = CHARACTER_ORDER.find(character_name)
 	_pending_character_direction = 0
@@ -84,7 +86,7 @@ func _select_character(character_name, animate = true):
 	_start_character_loading(character_name)
 
 
-func _unhandled_input(event):
+func _unhandled_input(event: InputEvent) -> void:
 	if _is_loading:
 		return
 	if event.is_action_pressed("ui_cancel"):
@@ -116,7 +118,7 @@ func _unhandled_input(event):
 		get_tree().set_input_as_handled()
 
 
-func _process(_delta):
+func _process(_delta: float) -> void:
 	if _loader != null:
 		_poll_scene_loader()
 		return
@@ -128,11 +130,11 @@ func _process(_delta):
 		return
 
 
-func _find_initial_focus_index():
+func _find_initial_focus_index() -> int:
 	return 0
 
 
-func _apply_focus():
+func _apply_focus() -> void:
 	if _menu_buttons.size() == 0:
 		return
 	var target = _menu_buttons[_focus_index]
@@ -140,7 +142,7 @@ func _apply_focus():
 		target.grab_focus()
 
 
-func _cycle_focus(step):
+func _cycle_focus(step: int) -> void:
 	if _menu_buttons.size() == 0:
 		return
 	_focus_index = (_focus_index + step) % _menu_buttons.size()
@@ -149,7 +151,7 @@ func _cycle_focus(step):
 	_apply_focus()
 
 
-func _begin_loading(scene_path, loading_bar, loading_label):
+func _begin_loading(scene_path: String, loading_bar: ProgressBar, loading_label: Label) -> void:
 	if _character_loader != null:
 		_cancel_character_loading()
 	var loader = ResourceLoader.load_interactive(scene_path)
@@ -166,11 +168,11 @@ func _begin_loading(scene_path, loading_bar, loading_label):
 	_update_process_state()
 
 
-func _update_process_state():
+func _update_process_state() -> void:
 	set_process(_loader != null or _character_loader != null or _level_preload_loader != null)
 
 
-func _poll_scene_loader():
+func _poll_scene_loader() -> void:
 	var err = _loader.poll()
 	if err == OK:
 		_update_loading_bar()
@@ -188,7 +190,7 @@ func _poll_scene_loader():
 	_cancel_loading()
 
 
-func _start_character_loading(character_name):
+func _start_character_loading(character_name: String) -> void:
 	var scene_path = CHARACTER_SCENES.get(character_name, "")
 	if scene_path == "":
 		push_error("Unknown character scene: " + str(character_name))
@@ -209,7 +211,7 @@ func _start_character_loading(character_name):
 	_update_process_state()
 
 
-func _poll_character_loader():
+func _poll_character_loader() -> void:
 	var err = _character_loader.poll()
 	if err == OK:
 		return
@@ -222,7 +224,7 @@ func _poll_character_loader():
 	_cancel_character_loading()
 
 
-func _finish_character_loading():
+func _finish_character_loading() -> void:
 	_character_finish_requested = false
 	if _character_loader == null:
 		return
@@ -243,7 +245,7 @@ func _finish_character_loading():
 	_start_level_preload()
 
 
-func _start_level_preload():
+func _start_level_preload() -> void:
 	if _level_preload_loader != null or _level_preload_packed != null:
 		return
 	var loader = ResourceLoader.load_interactive(LEVEL_SCENE_PATH)
@@ -254,7 +256,7 @@ func _start_level_preload():
 	_update_process_state()
 
 
-func _poll_level_preload():
+func _poll_level_preload() -> void:
 	var err = _level_preload_loader.poll()
 	if err == OK:
 		return
@@ -268,7 +270,7 @@ func _poll_level_preload():
 	_update_process_state()
 
 
-func _begin_loading_from_preload(loader, scene_path, loading_bar, loading_label):
+func _begin_loading_from_preload(loader: ResourceInteractiveLoader, scene_path: String, loading_bar: ProgressBar, loading_label: Label) -> void:
 	if _character_loader != null:
 		_cancel_character_loading()
 	_loader = loader
@@ -281,7 +283,7 @@ func _begin_loading_from_preload(loader, scene_path, loading_bar, loading_label)
 	_update_process_state()
 
 
-func _load_level_from_packed(packed):
+func _load_level_from_packed(packed: PackedScene) -> void:
 	if packed == null or not (packed is PackedScene):
 		push_error("Level preload is not a PackedScene.")
 		return
@@ -292,14 +294,14 @@ func _load_level_from_packed(packed):
 		var _error = get_tree().change_scene_to(packed)
 
 
-func _cancel_character_loading():
+func _cancel_character_loading() -> void:
 	_character_loader = null
 	_character_finish_requested = false
 	_set_character_loading_ui(false)
 	_update_process_state()
 
 
-func _instance_character(instance):
+func _instance_character(instance: Spatial) -> void:
 	var old_instance = null
 	if _character_instance != null and _character_instance.is_inside_tree():
 		old_instance = _character_instance
@@ -309,6 +311,7 @@ func _instance_character(instance):
 	if _character_anchor != null:
 		_character_anchor.add_child(_character_instance)
 	_normalize_character_nodes(_character_instance)
+	_apply_character_visibility_range(_character_instance)
 	_character_anim_player = _find_anim_player_with_idle(_character_instance)
 	_available_anim_names = _build_preview_anim_list(_character_anim_player)
 	_anim_index = 0
@@ -316,7 +319,7 @@ func _instance_character(instance):
 	_apply_character_transition(old_instance)
 
 
-func _update_loading_bar():
+func _update_loading_bar() -> void:
 	if _active_loading_bar == null or _loader == null:
 		return
 	var total = _loader.get_stage_count()
@@ -326,7 +329,7 @@ func _update_loading_bar():
 	_active_loading_bar.value = clamp(progress * 100.0, 0.0, 100.0)
 
 
-func _finish_loading():
+func _finish_loading() -> void:
 	_finish_requested = false
 	if _loader == null:
 		_set_loading_ui(false)
@@ -353,7 +356,7 @@ func _finish_loading():
 	_update_process_state()
 
 
-func _cancel_loading():
+func _cancel_loading() -> void:
 	_loader = null
 	_is_loading = false
 	_finish_requested = false
@@ -361,7 +364,7 @@ func _cancel_loading():
 	_update_process_state()
 
 
-func _set_loading_ui(enabled):
+func _set_loading_ui(enabled: bool) -> void:
 	if enabled:
 		if _active_loading_label != null:
 			_active_loading_label.visible = true
@@ -390,12 +393,12 @@ func _set_loading_ui(enabled):
 			button.disabled = enabled
 
 
-func _set_character_loading_ui(enabled):
+func _set_character_loading_ui(enabled: bool) -> void:
 	if _character_loading_label != null:
 		_character_loading_label.visible = enabled
 
 
-func _log_loader_error(err):
+func _log_loader_error(err: int) -> void:
 	var platform = OS.get_name()
 	var stage = 0
 	var total = 0
@@ -408,17 +411,17 @@ func _log_loader_error(err):
 		print("[Loader] error=", err, " stage=", stage, "/", total, " path=", _current_scene_path)
 
 
-func _find_anim_player_with_idle(node):
+func _find_anim_player_with_idle(node: Node) -> AnimationPlayer:
 	if node is AnimationPlayer and node.has_animation("idle"):
-		return node
+		return node as AnimationPlayer
 	for child in node.get_children():
-		var found = _find_anim_player_with_idle(child)
+		var found: AnimationPlayer = _find_anim_player_with_idle(child)
 		if found != null:
 			return found
 	return null
 
 
-func _build_preview_anim_list(anim_player):
+func _build_preview_anim_list(anim_player: AnimationPlayer) -> Array:
 	var result = []
 	if anim_player == null:
 		return result
@@ -428,7 +431,7 @@ func _build_preview_anim_list(anim_player):
 	return result
 
 
-func _play_preview_anim():
+func _play_preview_anim() -> void:
 	if _character_anim_player == null:
 		return
 	if _available_anim_names.size() == 0:
@@ -442,7 +445,7 @@ func _play_preview_anim():
 	_character_anim_player.play(anim_name)
 
 
-func _cycle_preview_anim(step):
+func _cycle_preview_anim(step: int) -> void:
 	if _character_anim_player == null:
 		return
 	if _available_anim_names.size() == 0:
@@ -453,7 +456,7 @@ func _cycle_preview_anim(step):
 	_play_preview_anim()
 
 
-func _normalize_character_nodes(root):
+func _normalize_character_nodes(root: Node) -> void:
 	if root == null:
 		return
 	var root_name = str(root.name)
@@ -496,11 +499,33 @@ func _normalize_character_nodes(root):
 			target_parent.add_child(child_node)
 
 
-func _sort_character_nodes_by_depth(a, b):
+func _apply_character_visibility_range(root: Node) -> void:
+	if root == null:
+		return
+	_apply_visibility_range_recursive(root, CHARACTER_VISIBILITY_RANGE_BEGIN, CHARACTER_VISIBILITY_RANGE_END)
+
+
+func _apply_visibility_range_recursive(node: Node, range_begin: float, range_end: float) -> void:
+	if node is VisualInstance:
+		if _has_property(node, "visibility_range_begin"):
+			node.set("visibility_range_begin", range_begin)
+			node.set("visibility_range_end", range_end)
+	for child in node.get_children():
+		_apply_visibility_range_recursive(child, range_begin, range_end)
+
+
+func _has_property(node: Object, prop_name: String) -> bool:
+	for info in node.get_property_list():
+		if info.name == prop_name:
+			return true
+	return false
+
+
+func _sort_character_nodes_by_depth(a: Dictionary, b: Dictionary) -> bool:
 	return int(a.depth) < int(b.depth)
 
 
-func _apply_character_transition(old_instance):
+func _apply_character_transition(old_instance: Spatial) -> void:
 	if old_instance != null and old_instance.is_inside_tree():
 		if not _pending_character_animate or _pending_character_direction == 0:
 			old_instance.queue_free()
@@ -515,7 +540,7 @@ func _apply_character_transition(old_instance):
 		_clear_character_transition_tween()
 
 
-func _start_character_transition_tween(direction):
+func _start_character_transition_tween(direction: int) -> void:
 	_clear_character_transition_tween()
 	var tween = Tween.new()
 	add_child(tween)
@@ -525,42 +550,42 @@ func _start_character_transition_tween(direction):
 		tween.interpolate_property(_transition_old_instance, "translation", _transition_old_instance.translation, old_target, CHARACTER_SLIDE_TIME, Tween.TRANS_SINE, Tween.EASE_IN)
 	tween.interpolate_property(_character_instance, "translation", _character_instance.translation, Vector3.ZERO, CHARACTER_SLIDE_TIME, Tween.TRANS_SINE, Tween.EASE_OUT)
 	tween.start()
-	tween.connect("tween_all_completed", self, "_on_character_transition_done")
+	var _connect_err: int = tween.connect("tween_all_completed", self, "_on_character_transition_done")
 
 
-func _clear_character_transition_tween():
+func _clear_character_transition_tween() -> void:
 	if _character_transition_tween != null:
-		_character_transition_tween.stop_all()
+		var _stop_err: bool = _character_transition_tween.stop_all()
 		_character_transition_tween.queue_free()
 		_character_transition_tween = null
 
 
-func _on_character_transition_done():
+func _on_character_transition_done() -> void:
 	if _transition_old_instance != null and _transition_old_instance.is_inside_tree():
 		_transition_old_instance.queue_free()
 	_transition_old_instance = null
 	_clear_character_transition_tween()
 
 
-func _on_AkimboBoy_pressed():
+func _on_AkimboBoy_pressed() -> void:
 	_select_character("AkimboBoy")
 
 
-func _on_Kinetic_Chad_pressed():
+func _on_Kinetic_Chad_pressed() -> void:
 	_select_character("KineticChad")
 
 
-func _on_FairyFire_pressed():
+func _on_FairyFire_pressed() -> void:
 	_select_character("FairyFire")
 
 
-func _on__Back_pressed():
+func _on__Back_pressed() -> void:
 	if _is_loading:
 		return
 	_begin_loading(MAIN_MENU_SCENE_PATH, _back_loading_bar, _back_loading_label)
 
 
-func _on_Start_Game_pressed():
+func _on_Start_Game_pressed() -> void:
 	if _is_loading:
 		return
 	GameGlobal.set_pending_scene_path(LEVEL_SCENE_PATH)

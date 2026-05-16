@@ -6,26 +6,26 @@ enum UnloadMode {
 	DETACH
 }
 
-export (NodePath) var world3d_path
-export (NodePath) var world2d_path
-export (NodePath) var ui_path
+export(NodePath) var world3d_path: NodePath
+export(NodePath) var world2d_path: NodePath
+export(NodePath) var ui_path: NodePath
 
-var world3d_container = null
-var world2d_container = null
-var ui_container = null
+var world3d_container: Node = null
+var world2d_container: Node = null
+var ui_container: Node = null
 
-var current_world3d_scene = null
-var current_world2d_scene = null
-var current_ui_scene = null
+var current_world3d_scene: Node = null
+var current_world2d_scene: Node = null
+var current_ui_scene: Node = null
 
-var detached_world3d_scene = null
-var detached_world2d_scene = null
-var detached_ui_scene = null
-var detached_world3d_scene_path = ""
-var detached_world2d_scene_path = ""
-var detached_ui_scene_path = ""
+var detached_world3d_scene: Node = null
+var detached_world2d_scene: Node = null
+var detached_ui_scene: Node = null
+var detached_world3d_scene_path := ""
+var detached_world2d_scene_path := ""
+var detached_ui_scene_path := ""
 
-func _ready():
+func _ready() -> void:
 	if not world3d_path:
 		push_error("GameController: world3d_path is not set.")
 	elif not has_node(world3d_path):
@@ -52,7 +52,7 @@ func _ready():
 	if world3d_container != null:
 		change_world3d_scene("res://gui/main_menu.tscn", UnloadMode.DELETE)
 
-func change_world3d_scene(scene_path, unload_mode = UnloadMode.DELETE):
+func change_world3d_scene(scene_path: String, unload_mode: int = UnloadMode.DELETE) -> void:
 	current_world3d_scene = _change_scene(
 		scene_path,
 		world3d_container,
@@ -61,7 +61,7 @@ func change_world3d_scene(scene_path, unload_mode = UnloadMode.DELETE):
 		unload_mode
 	)
 
-func change_world3d_scene_from_packed(packed_scene, unload_mode = UnloadMode.DELETE):
+func change_world3d_scene_from_packed(packed_scene: PackedScene, unload_mode: int = UnloadMode.DELETE) -> void:
 	current_world3d_scene = _change_scene_from_packed(
 		packed_scene,
 		world3d_container,
@@ -70,7 +70,7 @@ func change_world3d_scene_from_packed(packed_scene, unload_mode = UnloadMode.DEL
 		unload_mode
 	)
 
-func change_world2d_scene(scene_path, unload_mode = UnloadMode.DELETE):
+func change_world2d_scene(scene_path: String, unload_mode: int = UnloadMode.DELETE) -> void:
 	current_world2d_scene = _change_scene(
 		scene_path,
 		world2d_container,
@@ -79,7 +79,7 @@ func change_world2d_scene(scene_path, unload_mode = UnloadMode.DELETE):
 		unload_mode
 	)
 
-func change_ui_scene(scene_path, unload_mode = UnloadMode.DELETE):
+func change_ui_scene(scene_path: String, unload_mode: int = UnloadMode.DELETE) -> void:
 	current_ui_scene = _change_scene(
 		scene_path,
 		ui_container,
@@ -88,13 +88,13 @@ func change_ui_scene(scene_path, unload_mode = UnloadMode.DELETE):
 		unload_mode
 	)
 
-func has_detached_scene(layer_name, scene_path):
+func has_detached_scene(layer_name: String, scene_path: String) -> bool:
 	var detached_scene = _get_detached_scene(layer_name)
 	if detached_scene == null or not is_instance_valid(detached_scene):
 		return false
 	return _get_detached_scene_path(layer_name) == scene_path
 
-func _change_scene(scene_path, container, current_scene, layer_name, unload_mode):
+func _change_scene(scene_path: String, container: Node, current_scene: Node, layer_name: String, unload_mode: int) -> Node:
 	if container == null:
 		push_error("GameController: container for layer '" + layer_name + "' is null; cannot change scene.")
 		return current_scene
@@ -138,7 +138,7 @@ func _change_scene(scene_path, container, current_scene, layer_name, unload_mode
 	_debug_print_state(layer_name)
 	return new_scene
 
-func _change_scene_from_packed(packed_scene, container, current_scene, layer_name, unload_mode):
+func _change_scene_from_packed(packed_scene: PackedScene, container: Node, current_scene: Node, layer_name: String, unload_mode: int) -> Node:
 	if container == null:
 		push_error("GameController: container for layer '" + layer_name + "' is null; cannot change scene.")
 		return current_scene
@@ -161,7 +161,7 @@ func _change_scene_from_packed(packed_scene, container, current_scene, layer_nam
 	_debug_print_state(layer_name)
 	return new_scene
 
-func _unload_current_scene(current_scene, container, layer_name, unload_mode):
+func _unload_current_scene(current_scene: Node, container: Node, layer_name: String, unload_mode: int) -> void:
 	if unload_mode == UnloadMode.DELETE:
 		current_scene.queue_free()
 		return
@@ -180,7 +180,7 @@ func _unload_current_scene(current_scene, container, layer_name, unload_mode):
 	current_scene.queue_free()
 	return
 
-func _set_scene_visibility(scene_node, is_visible):
+func _set_scene_visibility(scene_node: Node, is_visible: bool) -> void:
 	if scene_node is Spatial:
 		scene_node.visible = is_visible
 	elif scene_node is CanvasItem:
@@ -188,7 +188,7 @@ func _set_scene_visibility(scene_node, is_visible):
 	# Also suspend/resume processing so hidden scenes don't consume CPU.
 	_set_processing_recursive(scene_node, is_visible)
 
-func _set_processing_recursive(node, enabled):
+func _set_processing_recursive(node: Node, enabled: bool) -> void:
 	node.set_process(enabled)
 	node.set_physics_process(enabled)
 	node.set_process_input(enabled)
@@ -196,7 +196,7 @@ func _set_processing_recursive(node, enabled):
 	for child in node.get_children():
 		_set_processing_recursive(child, enabled)
 
-func _set_detached_scene(layer_name, scene_node):
+func _set_detached_scene(layer_name: String, scene_node: Node) -> void:
 	var previous_scene = _get_detached_scene(layer_name)
 	if previous_scene != null and is_instance_valid(previous_scene):
 		previous_scene.queue_free()
@@ -211,7 +211,7 @@ func _set_detached_scene(layer_name, scene_node):
 	else:
 		push_error("Unknown layer name for detached scene: " + str(layer_name))
 
-func _clear_detached_scene(layer_name):
+func _clear_detached_scene(layer_name: String) -> void:
 	if layer_name == "world3d":
 		detached_world3d_scene = null
 		detached_world3d_scene_path = ""
@@ -224,7 +224,7 @@ func _clear_detached_scene(layer_name):
 	else:
 		push_error("Unknown layer name while clearing detached scene: " + str(layer_name))
 
-func _set_detached_scene_path(layer_name, scene_path):
+func _set_detached_scene_path(layer_name: String, scene_path: String) -> void:
 	if layer_name == "world3d":
 		detached_world3d_scene_path = scene_path
 	elif layer_name == "world2d":
@@ -234,7 +234,7 @@ func _set_detached_scene_path(layer_name, scene_path):
 	else:
 		push_error("Unknown layer name for detached scene path: " + str(layer_name))
 
-func _get_detached_scene_path(layer_name):
+func _get_detached_scene_path(layer_name: String) -> String:
 	if layer_name == "world3d":
 		return detached_world3d_scene_path
 	elif layer_name == "world2d":
@@ -243,7 +243,7 @@ func _get_detached_scene_path(layer_name):
 		return detached_ui_scene_path
 	return ""
 
-func _get_detached_scene(layer_name):
+func _get_detached_scene(layer_name: String) -> Node:
 	if layer_name == "world3d":
 		return detached_world3d_scene
 	elif layer_name == "world2d":
@@ -253,7 +253,7 @@ func _get_detached_scene(layer_name):
 	push_error("Unknown layer name while reading detached scene: " + str(layer_name))
 	return null
 
-func _debug_print_state(layer_name):
+func _debug_print_state(layer_name: String) -> void:
 	if not OS.is_debug_build():
 		return
 	print(
@@ -266,17 +266,17 @@ func _debug_print_state(layer_name):
 		" detachedUI=", _scene_name(detached_ui_scene)
 	)
 
-func _scene_name(scene_node):
+func _scene_name(scene_node: Node) -> String:
 	if scene_node != null and is_instance_valid(scene_node):
 		return scene_node.name
 	return "null"
 
-func _scene_path(scene_node):
+func _scene_path(scene_node: Node) -> String:
 	if scene_node != null and is_instance_valid(scene_node):
 		return scene_node.filename
 	return ""
 
-func _print_memory():
+func _print_memory() -> void:
 	var static_mb = OS.get_static_memory_usage() / 1024.0 / 1024.0
 	var dynamic_mb = OS.get_dynamic_memory_usage() / 1024.0 / 1024.0
 

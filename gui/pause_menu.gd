@@ -1,45 +1,45 @@
 extends Control
 
-func _ready():
+func _ready() -> void:
 	pause_mode = Node.PAUSE_MODE_PROCESS
 	$".".hide()
 	_set_loading_ui(false)
 
 
-onready var _menu_buttons = [
+onready var _menu_buttons: Array = [
 	$"Panel/Resume",
 	$"Panel/GoToMainMenu",
 	$"Panel/Quit",
 ]
-onready var _loading_bar = $"Panel/LoadingBar"
-onready var _loading_label = $"Panel/LoadingLabel"
+onready var _loading_bar: ProgressBar = $"Panel/LoadingBar"
+onready var _loading_label: Label = $"Panel/LoadingLabel"
 
-var _loader = null
-var _is_loading = false
-var _finish_requested = false
+var _loader: ResourceInteractiveLoader = null
+var _is_loading := false
+var _finish_requested := false
 
 const MAIN_MENU_PATH = "res://gui/main_menu.tscn"
 
 
-func resume():
+func resume() -> void:
 	get_tree().paused=false
 	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	$".".hide()
-func pause():
+func pause() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	get_tree().paused=true
 	$".".show()
 	
 
-func quitToMainMenu():
+func quitToMainMenu() -> void:
 	get_tree().paused=false
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	_begin_loading(MAIN_MENU_PATH)
 
 
 
-func testEsc():
+func testEsc() -> void:
 	
 	if Input.is_action_just_pressed("pause_game") and get_tree().paused==false:
 		pause()
@@ -47,24 +47,24 @@ func testEsc():
 		resume()
 
 
-func _on_Resume_pressed():
+func _on_Resume_pressed() -> void:
 	resume()
 
 
-func _on_Quit_pressed():
+func _on_Quit_pressed() -> void:
 	get_tree().quit()
 
-func _on_GoToMainMenu_pressed():
+func _on_GoToMainMenu_pressed() -> void:
 	quitToMainMenu()
 
-func _process(_delta):
+func _process(_delta: float) -> void:
 	if _loader != null:
 		_poll_loader()
 		return
 	testEsc()
 
 
-func _begin_loading(scene_path):
+func _begin_loading(scene_path: String) -> void:
 	if _is_loading:
 		return
 	var loader = ResourceLoader.load_interactive(scene_path)
@@ -78,7 +78,7 @@ func _begin_loading(scene_path):
 	set_process(true)
 
 
-func _poll_loader():
+func _poll_loader() -> void:
 	if _loader == null:
 		return
 	var err = _loader.poll()
@@ -99,7 +99,7 @@ func _poll_loader():
 	_cancel_loading()
 
 
-func _update_loading_bar():
+func _update_loading_bar() -> void:
 	if _loading_bar == null or _loader == null:
 		return
 	var total = _loader.get_stage_count()
@@ -109,7 +109,7 @@ func _update_loading_bar():
 	_loading_bar.value = clamp(progress * 100.0, 0.0, 100.0)
 
 
-func _finish_loading():
+func _finish_loading() -> void:
 	_finish_requested = false
 	if _loader == null:
 		_set_loading_ui(false)
@@ -130,7 +130,7 @@ func _finish_loading():
 		var _error = get_tree().change_scene_to(packed)
 
 
-func _cancel_loading():
+func _cancel_loading() -> void:
 	_loader = null
 	set_process(false)
 	_is_loading = false
@@ -138,7 +138,7 @@ func _cancel_loading():
 	_set_loading_ui(false)
 
 
-func _set_loading_ui(enabled):
+func _set_loading_ui(enabled: bool) -> void:
 	if _loading_label != null:
 		_loading_label.visible = enabled
 	if _loading_bar != null:
@@ -150,7 +150,7 @@ func _set_loading_ui(enabled):
 			button.disabled = enabled
 
 
-func _log_loader_error(err):
+func _log_loader_error(err: int) -> void:
 	var platform = OS.get_name()
 	var stage = 0
 	var total = 0

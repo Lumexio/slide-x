@@ -25,6 +25,8 @@ background_sky = SubResource( 3 )
 [node name="Level 1" type="Spatial"]
 script = ExtResource( 6 )
 
+[node name="BakedLightmap" type="BakedLightmap" parent="."]
+
 [node name="ColorRect" type="TextureRect" parent="."]
 anchor_right = 0.999
 anchor_bottom = 0.997
