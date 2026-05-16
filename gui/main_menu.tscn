@@ -205,7 +205,6 @@ transform = Transform( 0.936813, -4.70782e-10, 0.349831, -0.125311, 0.933643, 0.
 light_energy = 2.778
 light_indirect_energy = 1.296
 light_bake_mode = 2
-shadow_enabled = true
 shadow_color = Color( 0.909804, 0.839216, 0.839216, 1 )
 
 [node name="BakedLightmap" type="BakedLightmap" parent="."]
