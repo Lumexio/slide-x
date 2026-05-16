@@ -4,3 +4,4 @@
 
 [node name="FairyFire" type="Spatial"]
 [node name="meele-guy_menu_lod" parent="." instance=ExtResource( 1 )]
+rotation_degrees = Vector3(0, 180, 0)
