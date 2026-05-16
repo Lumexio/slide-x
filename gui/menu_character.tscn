@@ -137,6 +137,10 @@ environment = SubResource( 1 )
 
 [node name="BakedLightmap" type="BakedLightmap" parent="."]
 
+[node name="Occluders" type="Spatial" parent="."]
+
+[node name="MenuOccluder" type="Occluder" parent="Occluders"]
+
 [node name="SpotLight" type="SpotLight" parent="."]
 transform = Transform( 0.9901, -0.111571, 0.0851726, -0.134682, -0.584209, 0.80035, -0.0395371, -0.803898, -0.593452, 0.341853, 3.06501, -0.903733 )
 light_color = Color( 0.933333, 0.207843, 0.172549, 1 )
