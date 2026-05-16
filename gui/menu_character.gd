@@ -36,12 +36,38 @@ var _pending_character_direction := 0
 var _pending_character_animate := true
 var _level_preload_loader: ResourceInteractiveLoader = null
 var _level_preload_packed: PackedScene = null
+var _character_cache := {}
+var _character_cache_order: Array = []
+var _character_load_start_msec := 0
+var _character_load_elapsed_msec := 0
+var _character_last_sample_msec := 0
+var _character_memory_peak_static := 0.0
+var _character_memory_peak_dynamic := 0.0
+var _character_memory_peak_vram := 0.0
+var _character_memory_peak_tex := 0.0
+var _character_memory_peak_vtx := 0.0
+var _character_post_attach_remaining := 0.0
+var _character_post_attach_token := 0
+var _character_last_loaded_from_cache := false
+
+export(bool) var use_menu_lod := true
+export(int) var character_cache_limit := 1
+export(float) var character_memory_sample_interval := 0.2
+export(float) var character_memory_post_attach_window := 1.0
+export(bool) var menu_character_optimize := true
+export(bool) var menu_character_hide_joints := true
+export(bool) var menu_character_disable_shadows := true
 
 const CHARACTER_ORDER = ["AkimboBoy", "KineticChad", "FairyFire"]
 const CHARACTER_SCENES = {
 	"AkimboBoy": "res://scenes/characters/menu/AkimboBoy.tscn",
 	"KineticChad": "res://scenes/characters/menu/KineticChad.tscn",
 	"FairyFire": "res://scenes/characters/menu/FairyFire.tscn",
+}
+const CHARACTER_LOD_SCENES = {
+	"AkimboBoy": "res://scenes/characters/menu_lod/AkimboBoy.tscn",
+	"KineticChad": "res://scenes/characters/menu_lod/KineticChad.tscn",
+	"FairyFire": "res://scenes/characters/menu_lod/FairyFire.tscn",
 }
 const PREVIEW_ANIMATIONS = [
 	"idle",
@@ -191,10 +217,36 @@ func _poll_scene_loader() -> void:
 
 
 func _start_character_loading(character_name: String) -> void:
-	var scene_path = CHARACTER_SCENES.get(character_name, "")
+	_invalidate_character_post_attach_sampling()
+	_character_last_loaded_from_cache = false
+	_character_load_start_msec = OS.get_ticks_msec()
+	_character_load_elapsed_msec = 0
+	_character_last_sample_msec = _character_load_start_msec
+	_reset_character_memory_peak()
+	_sample_character_memory_peak()
+	var scene_path = _resolve_character_scene_path(character_name)
 	if scene_path == "":
 		push_error("Unknown character scene: " + str(character_name))
 		_set_character_loading_ui(false)
+		return
+	_character_scene_path = scene_path
+	var cached := _get_cached_character_scene(scene_path)
+	if cached != null:
+		_character_loader = null
+		_character_finish_requested = false
+		_set_character_loading_ui(false)
+		var cached_instance := cached.instance()
+		if cached_instance == null:
+			push_error("Failed to instance cached character scene.")
+			_update_process_state()
+			return
+		_character_last_loaded_from_cache = true
+		_instance_character(cached_instance)
+		_character_load_elapsed_msec = OS.get_ticks_msec() - _character_load_start_msec
+		_sample_character_memory_peak()
+		_start_character_post_attach_sampling()
+		_start_level_preload()
+		_update_process_state()
 		return
 	if _character_loader != null:
 		_character_loader = null
@@ -205,13 +257,19 @@ func _start_character_loading(character_name: String) -> void:
 		_set_character_loading_ui(false)
 		return
 	_character_loader = loader
-	_character_scene_path = scene_path
 	_character_finish_requested = false
 	_set_character_loading_ui(true)
 	_update_process_state()
 
 
 func _poll_character_loader() -> void:
+	var now = OS.get_ticks_msec()
+	var interval_msec = int(character_memory_sample_interval * 1000.0)
+	if interval_msec <= 0:
+		interval_msec = 1
+	if now - _character_last_sample_msec >= interval_msec:
+		_character_last_sample_msec = now
+		_sample_character_memory_peak()
 	var err = _character_loader.poll()
 	if err == OK:
 		return
@@ -235,13 +293,17 @@ func _finish_character_loading() -> void:
 		push_error("Character resource is not a PackedScene.")
 		_set_character_loading_ui(false)
 		return
+	_cache_character_scene(_character_scene_path, packed)
 	var instance = packed.instance()
 	if instance == null:
 		push_error("Failed to instance character scene.")
 		_set_character_loading_ui(false)
 		return
 	_instance_character(instance)
+	_character_load_elapsed_msec = OS.get_ticks_msec() - _character_load_start_msec
+	_sample_character_memory_peak()
 	_set_character_loading_ui(false)
+	_start_character_post_attach_sampling()
 	_start_level_preload()
 
 
@@ -294,7 +356,117 @@ func _load_level_from_packed(packed: PackedScene) -> void:
 		var _error = get_tree().change_scene_to(packed)
 
 
+func _resolve_character_scene_path(character_name: String) -> String:
+	if use_menu_lod:
+		var lod_path = CHARACTER_LOD_SCENES.get(character_name, "")
+		if lod_path != "" and ResourceLoader.exists(lod_path):
+			return lod_path
+	return CHARACTER_SCENES.get(character_name, "")
+
+
+func _get_cached_character_scene(scene_path: String) -> PackedScene:
+	if character_cache_limit <= 0:
+		return null
+	var cached = _character_cache.get(scene_path, null)
+	if cached != null and cached is PackedScene:
+		_touch_character_cache(scene_path)
+		return cached as PackedScene
+	return null
+
+
+func _cache_character_scene(scene_path: String, packed: PackedScene) -> void:
+	if character_cache_limit <= 0:
+		return
+	if packed == null:
+		return
+	_character_cache[scene_path] = packed
+	_touch_character_cache(scene_path)
+	while _character_cache_order.size() > character_cache_limit:
+		var evict_path = _character_cache_order[0]
+		_character_cache_order.remove(0)
+		_character_cache.erase(evict_path)
+
+
+func _touch_character_cache(scene_path: String) -> void:
+	var index = _character_cache_order.find(scene_path)
+	if index != -1:
+		_character_cache_order.remove(index)
+	_character_cache_order.append(scene_path)
+
+
+func _reset_character_memory_peak() -> void:
+	_character_memory_peak_static = 0.0
+	_character_memory_peak_dynamic = 0.0
+	_character_memory_peak_vram = 0.0
+	_character_memory_peak_tex = 0.0
+	_character_memory_peak_vtx = 0.0
+
+
+func _sample_character_memory_peak() -> void:
+	var static_mb = OS.get_static_memory_usage() / 1024.0 / 1024.0
+	var dynamic_mb = OS.get_dynamic_memory_usage() / 1024.0 / 1024.0
+	var vram_mb = Performance.get_monitor(Performance.RENDER_VIDEO_MEM_USED) / 1024.0 / 1024.0
+	var tex_mb = Performance.get_monitor(Performance.RENDER_TEXTURE_MEM_USED) / 1024.0 / 1024.0
+	var vtx_mb = Performance.get_monitor(Performance.RENDER_VERTEX_MEM_USED) / 1024.0 / 1024.0
+	_character_memory_peak_static = max(_character_memory_peak_static, static_mb)
+	_character_memory_peak_dynamic = max(_character_memory_peak_dynamic, dynamic_mb)
+	_character_memory_peak_vram = max(_character_memory_peak_vram, vram_mb)
+	_character_memory_peak_tex = max(_character_memory_peak_tex, tex_mb)
+	_character_memory_peak_vtx = max(_character_memory_peak_vtx, vtx_mb)
+
+
+func _invalidate_character_post_attach_sampling() -> void:
+	_character_post_attach_token += 1
+	_character_post_attach_remaining = 0.0
+
+
+func _start_character_post_attach_sampling() -> void:
+	_invalidate_character_post_attach_sampling()
+	if character_memory_post_attach_window <= 0.0:
+		_print_character_metrics()
+		return
+	_character_post_attach_remaining = character_memory_post_attach_window
+	var token = _character_post_attach_token
+	call_deferred("_poll_character_post_attach_sampling", token)
+
+
+func _poll_character_post_attach_sampling(token: int) -> void:
+	var interval = character_memory_sample_interval
+	if interval <= 0.0:
+		interval = 0.05
+	while token == _character_post_attach_token:
+		yield(get_tree().create_timer(interval), "timeout")
+		if token != _character_post_attach_token:
+			return
+		_character_post_attach_remaining -= interval
+		_sample_character_memory_peak()
+		if _character_post_attach_remaining <= 0.0:
+			_print_character_metrics()
+			return
+
+
+func _print_character_metrics() -> void:
+	var elapsed_ms = _character_load_elapsed_msec
+	if elapsed_ms <= 0:
+		elapsed_ms = OS.get_ticks_msec() - _character_load_start_msec
+	var source = "load"
+	if _character_last_loaded_from_cache:
+		source = "cache"
+	var lod_path = CHARACTER_LOD_SCENES.get(current_character, "")
+	var is_lod = lod_path != "" and _character_scene_path == lod_path
+	var prefix = "[MenuChar]"
+	if OS.get_name() == "Vita":
+		prefix = "[Vita][MenuChar]"
+	print(prefix, " name=", current_character,
+			" source=", source, " lod=", is_lod,
+			" ms=", elapsed_ms, " scene=", _character_scene_path,
+			" RAM static=", _character_memory_peak_static, "MB  dynamic=", _character_memory_peak_dynamic,
+			"MB  VRAM=", _character_memory_peak_vram, "MB  tex=", _character_memory_peak_tex,
+			"MB  vtx=", _character_memory_peak_vtx, "MB")
+
+
 func _cancel_character_loading() -> void:
+	_invalidate_character_post_attach_sampling()
 	_character_loader = null
 	_character_finish_requested = false
 	_set_character_loading_ui(false)
@@ -312,6 +484,8 @@ func _instance_character(instance: Spatial) -> void:
 		_character_anchor.add_child(_character_instance)
 	_normalize_character_nodes(_character_instance)
 	_apply_character_visibility_range(_character_instance)
+	if menu_character_optimize:
+		_optimize_menu_character(_character_instance)
 	_character_anim_player = _find_anim_player_with_idle(_character_instance)
 	_available_anim_names = _build_preview_anim_list(_character_anim_player)
 	_anim_index = 0
@@ -497,6 +671,23 @@ func _normalize_character_nodes(root: Node) -> void:
 		if child_node.get_parent() != target_parent:
 			child_node.get_parent().remove_child(child_node)
 			target_parent.add_child(child_node)
+
+
+func _optimize_menu_character(root: Node) -> void:
+	if root == null:
+		return
+	var stack = [root]
+	while stack.size() > 0:
+		var node = stack.pop_back()
+		if node is MeshInstance:
+			if menu_character_disable_shadows:
+				node.cast_shadow = GeometryInstance.SHADOW_CASTING_SETTING_OFF
+			if menu_character_hide_joints:
+				var node_name = str(node.name)
+				if node_name.find("Alpha_Joints") != -1:
+					node.visible = false
+		for child in node.get_children():
+			stack.append(child)
 
 
 func _apply_character_visibility_range(root: Node) -> void:

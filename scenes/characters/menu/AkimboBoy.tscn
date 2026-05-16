@@ -13034,7 +13034,7 @@ tracks/129/keys = PoolRealArray( 0, 1, 0.0119138, -0.905571, -0.167627, -0.02927
 material = SubResource( 2 )
 
 [node name="AkimboBoy" type="Spatial"]
-transform = Transform( -1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 3, 0, 0 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 0 )
 
 [node name="AkimboBoy@meele-guy" type="Spatial" parent="."]
 transform = Transform( -1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 0, 0, 0 )

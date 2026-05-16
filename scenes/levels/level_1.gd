@@ -16,12 +16,18 @@ var _memory_peak_tex := 0.0
 var _memory_peak_vtx := 0.0
 var _memory_post_attach_remaining := 0.0
 var _memory_post_attach_active := false
+var _memory_post_attach_timer: Timer = null
 
 
 func _ready() -> void:
 	set_process(false)
 	_set_env_loading_visible(false)
+	_setup_post_attach_timer()
 	call_deferred("_start_env_load")
+
+
+func _exit_tree() -> void:
+	_stop_post_attach_sampling()
 
 
 func _process(_delta: float) -> void:
@@ -85,18 +91,9 @@ func _start_post_attach_sampling() -> void:
 	_memory_post_attach_remaining = memory_post_attach_window
 	_memory_post_attach_active = true
 	set_process(true)
-	call_deferred("_poll_post_attach_sampling")
-
-
-func _poll_post_attach_sampling() -> void:
-	while _memory_post_attach_active:
-		yield(get_tree().create_timer(memory_sample_interval), "timeout")
-		_memory_post_attach_remaining -= memory_sample_interval
-		_sample_memory_peak()
-		if _memory_post_attach_remaining <= 0.0:
-			_memory_post_attach_active = false
-			_print_memory_peak()
-			set_process(false)
+	if _memory_post_attach_timer != null:
+		_memory_post_attach_timer.wait_time = _get_post_attach_interval()
+		_memory_post_attach_timer.start()
 
 
 func _reset_memory_peak() -> void:
@@ -129,3 +126,36 @@ func _print_memory_peak() -> void:
 			" RAM static=", _memory_peak_static, "MB  dynamic=", _memory_peak_dynamic,
 			"MB  VRAM=", _memory_peak_vram, "MB  tex=", _memory_peak_tex, "MB  vtx=",
 			_memory_peak_vtx, "MB")
+
+
+func _setup_post_attach_timer() -> void:
+	_memory_post_attach_timer = Timer.new()
+	_memory_post_attach_timer.one_shot = false
+	_memory_post_attach_timer.autostart = false
+	_memory_post_attach_timer.wait_time = _get_post_attach_interval()
+	add_child(_memory_post_attach_timer)
+	_memory_post_attach_timer.connect("timeout", self, "_on_post_attach_sample")
+
+
+func _stop_post_attach_sampling() -> void:
+	_memory_post_attach_active = false
+	if _memory_post_attach_timer != null:
+		_memory_post_attach_timer.stop()
+
+
+func _on_post_attach_sample() -> void:
+	if not _memory_post_attach_active:
+		_stop_post_attach_sampling()
+		return
+	_memory_post_attach_remaining -= _memory_post_attach_timer.wait_time
+	_sample_memory_peak()
+	if _memory_post_attach_remaining <= 0.0:
+		_stop_post_attach_sampling()
+		_print_memory_peak()
+		set_process(false)
+
+
+func _get_post_attach_interval() -> float:
+	if memory_sample_interval <= 0.0:
+		return 0.05
+	return memory_sample_interval

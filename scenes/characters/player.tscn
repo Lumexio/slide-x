@@ -18022,9 +18022,10 @@ transform = Transform( 0.999929, 0, -0.0119029, 0, 1, 0, 0.0119029, 0, 0.999929,
 
 [node name="CameraRay" type="RayCast" parent="camera_mount"]
 enabled = true
-exclude_parent = true
 cast_to = Vector3( 0.00666048, 0.966543, 2.30562 )
 
 [node name="Camera" type="Camera" parent="camera_mount"]
 transform = Transform( 0.999746, -0.00240318, -0.0224176, 0.00930246, 0.949691, 0.31305, 0.0205374, -0.313179, 0.949472, 0.00666048, 0.966543, 2.30562 )
-fov = 87.3958
+fov = 68.0
+near = 1.95
+far = 56.0
