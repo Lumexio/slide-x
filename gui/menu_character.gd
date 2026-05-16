@@ -49,6 +49,12 @@ var _character_memory_peak_vtx := 0.0
 var _character_post_attach_remaining := 0.0
 var _character_post_attach_token := 0
 var _character_last_loaded_from_cache := false
+var _loading_show_start_msec := 0
+var _loading_finish_ready_msec := 0
+var _pending_packed: PackedScene = null
+var _character_loading_show_start_msec := 0
+var _character_loading_hide_ready_msec := 0
+var _character_loading_pending_hide := false
 
 export(bool) var use_menu_lod := true
 export(int) var character_cache_limit := 1
@@ -88,6 +94,8 @@ const CHARACTER_VISIBILITY_RANGE_END = 12.0
 const LEVEL_SCENE_PATH = "res://scenes/levels/level_1.tscn"
 const MAIN_MENU_SCENE_PATH = "res://gui/main_menu.tscn"
 const LOADING_SCENE_PATH = "res://gui/loading_screen.tscn"
+const LOADING_MIN_SHOW_MSEC := 200
+const CHARACTER_LOADING_MIN_SHOW_MSEC := 200
 
 
 func _ready() -> void:
@@ -147,13 +155,14 @@ func _unhandled_input(event: InputEvent) -> void:
 func _process(_delta: float) -> void:
 	if _loader != null:
 		_poll_scene_loader()
-		return
-	if _character_loader != null:
+	elif _pending_packed != null:
+		_poll_packed_loading()
+	elif _character_loader != null:
 		_poll_character_loader()
-		return
-	if _level_preload_loader != null:
+	elif _level_preload_loader != null:
 		_poll_level_preload()
-		return
+	_maybe_finish_loading()
+	_maybe_hide_character_loading()
 
 
 func _find_initial_focus_index() -> int:
@@ -189,13 +198,17 @@ func _begin_loading(scene_path: String, loading_bar: ProgressBar, loading_label:
 	_current_scene_path = scene_path
 	_active_loading_bar = loading_bar
 	_active_loading_label = loading_label
+	_pending_packed = null
+	_loading_show_start_msec = OS.get_ticks_msec()
+	_loading_finish_ready_msec = _loading_show_start_msec + LOADING_MIN_SHOW_MSEC
+	_finish_requested = false
 	_set_loading_ui(true)
 	_update_loading_bar()
 	_update_process_state()
 
 
 func _update_process_state() -> void:
-	set_process(_loader != null or _character_loader != null or _level_preload_loader != null)
+	set_process(_loader != null or _pending_packed != null or _character_loader != null or _level_preload_loader != null or _character_loading_pending_hide)
 
 
 func _poll_scene_loader() -> void:
@@ -209,7 +222,7 @@ func _poll_scene_loader() -> void:
 			_active_loading_bar.value = 100.0
 		if not _finish_requested:
 			_finish_requested = true
-			call_deferred("_finish_loading")
+			_loading_finish_ready_msec = _loading_show_start_msec + LOADING_MIN_SHOW_MSEC
 		return
 	_log_loader_error(err)
 	push_error("Loading failed with error code: " + str(err))
@@ -224,26 +237,28 @@ func _start_character_loading(character_name: String) -> void:
 	_character_last_sample_msec = _character_load_start_msec
 	_reset_character_memory_peak()
 	_sample_character_memory_peak()
+	_show_character_loading_ui()
 	var scene_path = _resolve_character_scene_path(character_name)
 	if scene_path == "":
 		push_error("Unknown character scene: " + str(character_name))
-		_set_character_loading_ui(false)
+		_request_character_loading_hide()
 		return
 	_character_scene_path = scene_path
 	var cached := _get_cached_character_scene(scene_path)
 	if cached != null:
 		_character_loader = null
 		_character_finish_requested = false
-		_set_character_loading_ui(false)
 		var cached_instance := cached.instance()
 		if cached_instance == null:
 			push_error("Failed to instance cached character scene.")
+			_request_character_loading_hide()
 			_update_process_state()
 			return
 		_character_last_loaded_from_cache = true
 		_instance_character(cached_instance)
 		_character_load_elapsed_msec = OS.get_ticks_msec() - _character_load_start_msec
 		_sample_character_memory_peak()
+		_request_character_loading_hide()
 		_start_character_post_attach_sampling()
 		_start_level_preload()
 		_update_process_state()
@@ -254,11 +269,10 @@ func _start_character_loading(character_name: String) -> void:
 	var loader = ResourceLoader.load_interactive(scene_path)
 	if loader == null:
 		push_error("Failed to start character load: " + str(scene_path))
-		_set_character_loading_ui(false)
+		_request_character_loading_hide()
 		return
 	_character_loader = loader
 	_character_finish_requested = false
-	_set_character_loading_ui(true)
 	_update_process_state()
 
 
@@ -291,18 +305,18 @@ func _finish_character_loading() -> void:
 	_update_process_state()
 	if packed == null or not (packed is PackedScene):
 		push_error("Character resource is not a PackedScene.")
-		_set_character_loading_ui(false)
+		_request_character_loading_hide()
 		return
 	_cache_character_scene(_character_scene_path, packed)
 	var instance = packed.instance()
 	if instance == null:
 		push_error("Failed to instance character scene.")
-		_set_character_loading_ui(false)
+		_request_character_loading_hide()
 		return
 	_instance_character(instance)
 	_character_load_elapsed_msec = OS.get_ticks_msec() - _character_load_start_msec
 	_sample_character_memory_peak()
-	_set_character_loading_ui(false)
+	_request_character_loading_hide()
 	_start_character_post_attach_sampling()
 	_start_level_preload()
 
@@ -332,6 +346,33 @@ func _poll_level_preload() -> void:
 	_update_process_state()
 
 
+func _poll_packed_loading() -> void:
+	if _active_loading_bar != null:
+		_active_loading_bar.value = 100.0
+
+
+func _maybe_finish_loading() -> void:
+	var now = OS.get_ticks_msec()
+	if _pending_packed != null:
+		if now >= _loading_finish_ready_msec:
+			_finish_loading_from_packed(_pending_packed)
+		return
+	if _finish_requested and now >= _loading_finish_ready_msec:
+		_finish_loading()
+
+
+func _maybe_hide_character_loading() -> void:
+	if not _character_loading_pending_hide:
+		return
+	if _character_loader != null:
+		return
+	if OS.get_ticks_msec() < _character_loading_hide_ready_msec:
+		return
+	_set_character_loading_ui(false)
+	_character_loading_pending_hide = false
+	_update_process_state()
+
+
 func _begin_loading_from_preload(loader: ResourceInteractiveLoader, scene_path: String, loading_bar: ProgressBar, loading_label: Label) -> void:
 	if _character_loader != null:
 		_cancel_character_loading()
@@ -340,8 +381,30 @@ func _begin_loading_from_preload(loader: ResourceInteractiveLoader, scene_path: 
 	_current_scene_path = scene_path
 	_active_loading_bar = loading_bar
 	_active_loading_label = loading_label
+	_pending_packed = null
+	_loading_show_start_msec = OS.get_ticks_msec()
+	_loading_finish_ready_msec = _loading_show_start_msec + LOADING_MIN_SHOW_MSEC
+	_finish_requested = false
 	_set_loading_ui(true)
 	_update_loading_bar()
+	_update_process_state()
+
+
+func _begin_loading_from_packed(packed: PackedScene, scene_path: String, loading_bar: ProgressBar, loading_label: Label) -> void:
+	if _character_loader != null:
+		_cancel_character_loading()
+	_loader = null
+	_pending_packed = packed
+	_is_loading = true
+	_current_scene_path = scene_path
+	_active_loading_bar = loading_bar
+	_active_loading_label = loading_label
+	_loading_show_start_msec = OS.get_ticks_msec()
+	_loading_finish_ready_msec = _loading_show_start_msec + LOADING_MIN_SHOW_MSEC
+	_finish_requested = false
+	_set_loading_ui(true)
+	if _active_loading_bar != null:
+		_active_loading_bar.value = 100.0
 	_update_process_state()
 
 
@@ -470,6 +533,7 @@ func _cancel_character_loading() -> void:
 	_character_loader = null
 	_character_finish_requested = false
 	_set_character_loading_ui(false)
+	_character_loading_pending_hide = false
 	_update_process_state()
 
 
@@ -530,10 +594,29 @@ func _finish_loading() -> void:
 	_update_process_state()
 
 
+func _finish_loading_from_packed(packed: PackedScene) -> void:
+	_pending_packed = null
+	_finish_requested = false
+	_is_loading = false
+	if packed == null or not (packed is PackedScene):
+		push_error("Loaded resource is not a PackedScene.")
+		_set_loading_ui(false)
+		_active_loading_bar = null
+		_active_loading_label = null
+		_update_process_state()
+		return
+	_load_level_from_packed(packed)
+	_set_loading_ui(false)
+	_active_loading_bar = null
+	_active_loading_label = null
+	_update_process_state()
+
+
 func _cancel_loading() -> void:
 	_loader = null
 	_is_loading = false
 	_finish_requested = false
+	_pending_packed = null
 	_set_loading_ui(false)
 	_update_process_state()
 
@@ -570,6 +653,24 @@ func _set_loading_ui(enabled: bool) -> void:
 func _set_character_loading_ui(enabled: bool) -> void:
 	if _character_loading_label != null:
 		_character_loading_label.visible = enabled
+
+
+func _show_character_loading_ui() -> void:
+	_character_loading_show_start_msec = OS.get_ticks_msec()
+	_character_loading_hide_ready_msec = _character_loading_show_start_msec + CHARACTER_LOADING_MIN_SHOW_MSEC
+	_character_loading_pending_hide = true
+	_set_character_loading_ui(true)
+	_update_process_state()
+
+
+func _request_character_loading_hide() -> void:
+	if OS.get_ticks_msec() >= _character_loading_hide_ready_msec:
+		_set_character_loading_ui(false)
+		_character_loading_pending_hide = false
+		_update_process_state()
+	else:
+		_character_loading_pending_hide = true
+		_update_process_state()
 
 
 func _log_loader_error(err: int) -> void:
@@ -779,9 +880,12 @@ func _on__Back_pressed() -> void:
 func _on_Start_Game_pressed() -> void:
 	if _is_loading:
 		return
-	GameGlobal.set_pending_scene_path(LEVEL_SCENE_PATH)
-	var controller = GameGlobal.get_game_controller()
-	if controller != null and controller.has_method("change_world3d_scene"):
-		controller.change_world3d_scene(LOADING_SCENE_PATH)
-	else:
-		var _error = get_tree().change_scene(LOADING_SCENE_PATH)
+	if _level_preload_loader != null:
+		var loader = _level_preload_loader
+		_level_preload_loader = null
+		_begin_loading_from_preload(loader, LEVEL_SCENE_PATH, _loading_bar, _loading_label)
+		return
+	if _level_preload_packed != null:
+		_begin_loading_from_packed(_level_preload_packed, LEVEL_SCENE_PATH, _loading_bar, _loading_label)
+		return
+	_begin_loading(LEVEL_SCENE_PATH, _loading_bar, _loading_label)
