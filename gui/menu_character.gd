@@ -67,19 +67,25 @@ export(bool) var menu_character_disable_shadows := true
 const CHARACTER_ORDER = ["AkimboBoy", "KineticChad", "FairyFire"]
 const CHARACTER_SCENES = {
 	"AkimboBoy": "res://scenes/characters/menu/AkimboBoy.tscn",
-	"KineticChad": "res://scenes/characters/menu/KineticChad.tscn",
+	"KineticChad": "res://scenes/characters/menu/kinetic-chad.tscn",
 	"FairyFire": "res://scenes/characters/menu/FairyFire.tscn",
 }
 const CHARACTER_LOD_SCENES = {
 	"AkimboBoy": "res://scenes/characters/menu_lod/AkimboBoy.tscn",
-	"KineticChad": "res://scenes/characters/menu_lod/KineticChad.tscn",
+	"KineticChad": "res://scenes/characters/menu/kinetic-chad.tscn",
 	"FairyFire": "res://scenes/characters/menu_lod/FairyFire.tscn",
+}
+const CHARACTER_PREVIEW_ROTATIONS = {
+	"AkimboBoy": Vector3(0, 180, 0),
+	"KineticChad": Vector3(0, 180, 0),
+	"FairyFire": Vector3(0, 180, 0),
 }
 const PREVIEW_ANIMATIONS = [
 	"idle",
 	"walk",
 	"run",
 	"punch",
+	"elbow",
 	"kick",
 	"punch-elbow",
 	"punch-hard",
@@ -544,6 +550,7 @@ func _instance_character(instance: Spatial) -> void:
 	_character_instance = instance
 	_character_instance.translation = Vector3.ZERO
 	_character_instance.rotation = Vector3.ZERO
+	_apply_character_rotation(_character_instance, current_character)
 	if _character_anchor != null:
 		_character_anchor.add_child(_character_instance)
 	_normalize_character_nodes(_character_instance)
@@ -795,6 +802,15 @@ func _apply_character_visibility_range(root: Node) -> void:
 	if root == null:
 		return
 	_apply_visibility_range_recursive(root, CHARACTER_VISIBILITY_RANGE_BEGIN, CHARACTER_VISIBILITY_RANGE_END)
+
+
+func _apply_character_rotation(instance: Spatial, character_name: String) -> void:
+	if instance == null:
+		return
+	var rotation_degrees = CHARACTER_PREVIEW_ROTATIONS.get(character_name, null)
+	if rotation_degrees == null:
+		return
+	instance.rotation_degrees = rotation_degrees
 
 
 func _apply_visibility_range_recursive(node: Node, range_begin: float, range_end: float) -> void:
