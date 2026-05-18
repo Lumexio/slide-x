@@ -14,6 +14,7 @@ onready var _back_loading_bar: ProgressBar = $"TaskBar/BackLoadingBar"
 onready var _back_loading_label: Label = $"TaskBar/BackLoadingLabel"
 onready var _character_loading_label: Label = $"TaskBar/CharacterLoadingLabel"
 onready var _character_anchor: Spatial = $"CharacterAnchor"
+onready var _character_light: Light = $"SpotLight"
 
 var current_character := ""
 var _focus_index := 0
@@ -55,6 +56,22 @@ var _pending_packed: PackedScene = null
 var _character_loading_show_start_msec := 0
 var _character_loading_hide_ready_msec := 0
 var _character_loading_pending_hide := false
+var _level_thread: Thread = null
+var _level_thread_mutex: Mutex = null
+var _level_thread_done := false
+var _level_thread_error := ""
+var _level_thread_packed: PackedScene = null
+var _waiting_for_level_preload := false
+var _character_thread: Thread = null
+var _character_thread_mutex: Mutex = null
+var _character_thread_done := false
+var _character_thread_error := ""
+var _character_thread_packed: PackedScene = null
+var _character_thread_token := 0
+var _character_thread_result_token := -1
+var _character_thread_scene_path := ""
+var _character_thread_pending_scene_path := ""
+var _character_thread_pending_character := ""
 
 export(bool) var use_menu_lod := true
 export(int) var character_cache_limit := 1
@@ -63,6 +80,8 @@ export(float) var character_memory_post_attach_window := 1.0
 export(bool) var menu_character_optimize := true
 export(bool) var menu_character_hide_joints := true
 export(bool) var menu_character_disable_shadows := true
+export(bool) var use_threaded_level_load := true
+export(bool) var use_threaded_character_load := true
 
 const CHARACTER_ORDER = ["AkimboBoy", "KineticChad", "FairyFire"]
 const CHARACTER_SCENES = {
@@ -106,10 +125,17 @@ const CHARACTER_LOADING_MIN_SHOW_MSEC := 200
 
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	_level_thread_mutex = Mutex.new()
+	_character_thread_mutex = Mutex.new()
 	_select_character("AkimboBoy", false)
 	_focus_index = _find_initial_focus_index()
 	_apply_focus()
 	_update_process_state()
+
+
+func _exit_tree() -> void:
+	_stop_level_thread()
+	_stop_character_thread()
 
 
 func _select_character(character_name: String, animate: bool = true) -> void:
@@ -123,7 +149,22 @@ func _select_character(character_name: String, animate: bool = true) -> void:
 			_pending_character_direction = -1
 	_pending_character_animate = animate
 	current_character = character_name
+	_apply_character_light(character_name)
 	_start_character_loading(character_name)
+
+
+func _apply_character_light(character_name: String) -> void:
+	if _character_light == null:
+		return
+	match character_name:
+		"KineticChad":
+			_character_light.light_color = Color(1, 0, 0, 1)
+		"AkimboBoy":
+			_character_light.light_color = Color(0, 1, 0, 1)
+		"FairyFire":
+			_character_light.light_color = Color(1, 0.4, 0.7, 1)
+		_:
+			pass
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -165,8 +206,12 @@ func _process(_delta: float) -> void:
 		_poll_packed_loading()
 	elif _character_loader != null:
 		_poll_character_loader()
+	elif _character_thread != null:
+		_poll_character_thread()
 	elif _level_preload_loader != null:
 		_poll_level_preload()
+	elif _level_thread != null:
+		_poll_level_thread()
 	_maybe_finish_loading()
 	_maybe_hide_character_loading()
 
@@ -214,7 +259,7 @@ func _begin_loading(scene_path: String, loading_bar: ProgressBar, loading_label:
 
 
 func _update_process_state() -> void:
-	set_process(_loader != null or _pending_packed != null or _character_loader != null or _level_preload_loader != null or _character_loading_pending_hide)
+	set_process(_loader != null or _pending_packed != null or _character_loader != null or _character_thread != null or _level_preload_loader != null or _level_thread != null or _character_loading_pending_hide)
 
 
 func _poll_scene_loader() -> void:
@@ -269,6 +314,130 @@ func _start_character_loading(character_name: String) -> void:
 		_start_level_preload()
 		_update_process_state()
 		return
+	if use_threaded_character_load:
+		_start_character_thread(character_name, scene_path)
+		return
+	if _character_loader != null:
+		_character_loader = null
+		_character_finish_requested = false
+	var loader = ResourceLoader.load_interactive(scene_path)
+	if loader == null:
+		push_error("Failed to start character load: " + str(scene_path))
+		_request_character_loading_hide()
+		return
+	_character_loader = loader
+	_character_finish_requested = false
+	_update_process_state()
+
+
+func _start_character_thread(character_name: String, scene_path: String) -> void:
+	if _character_thread != null:
+		_character_thread_pending_scene_path = scene_path
+		_character_thread_pending_character = character_name
+		return
+	if _character_thread_mutex == null:
+		_character_thread_mutex = Mutex.new()
+	_character_thread_token += 1
+	_character_thread_scene_path = scene_path
+	_character_thread_done = false
+	_character_thread_error = ""
+	_character_thread_packed = null
+	_character_thread_result_token = -1
+	_character_thread = Thread.new()
+	var err = _character_thread.start(self, "_thread_load_character", {"scene_path": scene_path, "token": _character_thread_token})
+	if err != OK:
+		push_error("Failed to start character thread: " + str(err))
+		_character_thread = null
+		_start_character_interactive(scene_path)
+		return
+	_update_process_state()
+
+
+func _thread_load_character(userdata) -> void:
+	var scene_path = ""
+	var token = 0
+	if typeof(userdata) == TYPE_DICTIONARY:
+		scene_path = str(userdata.get("scene_path", ""))
+		token = int(userdata.get("token", 0))
+	var loaded = null
+	if scene_path != "":
+		loaded = load(scene_path)
+	var packed: PackedScene = null
+	var err = ""
+	if loaded == null or not (loaded is PackedScene):
+		err = "Character preload is not a PackedScene: " + str(scene_path)
+	else:
+		packed = loaded
+	_character_thread_mutex.lock()
+	_character_thread_packed = packed
+	_character_thread_error = err
+	_character_thread_done = true
+	_character_thread_result_token = token
+	_character_thread_mutex.unlock()
+
+
+func _poll_character_thread() -> void:
+	if _character_thread == null:
+		return
+	var done = false
+	var err = ""
+	var packed: PackedScene = null
+	var result_token = -1
+	_character_thread_mutex.lock()
+	done = _character_thread_done
+	err = _character_thread_error
+	packed = _character_thread_packed
+	result_token = _character_thread_result_token
+	_character_thread_mutex.unlock()
+	if not done:
+		return
+	_character_thread.wait_to_finish()
+	_character_thread = null
+	_character_thread_done = false
+	_character_thread_error = ""
+	_character_thread_packed = null
+	_character_thread_result_token = -1
+	if result_token != _character_thread_token:
+		_process_pending_character_thread_request()
+		return
+	if err != "":
+		push_error(err)
+		_start_character_interactive(_character_scene_path)
+		_character_thread_pending_scene_path = ""
+		_character_thread_pending_character = ""
+		_update_process_state()
+		return
+	_finish_character_loading_from_packed(packed)
+	_process_pending_character_thread_request()
+	_update_process_state()
+
+
+func _process_pending_character_thread_request() -> void:
+	if _character_thread_pending_scene_path == "":
+		return
+	var pending_scene = _character_thread_pending_scene_path
+	var pending_character = _character_thread_pending_character
+	_character_thread_pending_scene_path = ""
+	_character_thread_pending_character = ""
+	_start_character_thread(pending_character, pending_scene)
+
+
+func _stop_character_thread() -> void:
+	if _character_thread == null:
+		return
+	_character_thread.wait_to_finish()
+	_character_thread = null
+	_character_thread_done = false
+	_character_thread_error = ""
+	_character_thread_packed = null
+	_character_thread_result_token = -1
+	_update_process_state()
+
+
+func _start_character_interactive(scene_path: String) -> void:
+	if scene_path == "":
+		_request_character_loading_hide()
+		return
 	if _character_loader != null:
 		_character_loader = null
 		_character_finish_requested = false
@@ -309,6 +478,10 @@ func _finish_character_loading() -> void:
 	var packed = _character_loader.get_resource()
 	_character_loader = null
 	_update_process_state()
+	_finish_character_loading_from_packed(packed)
+
+
+func _finish_character_loading_from_packed(packed: PackedScene) -> void:
 	if packed == null or not (packed is PackedScene):
 		push_error("Character resource is not a PackedScene.")
 		_request_character_loading_hide()
@@ -330,11 +503,88 @@ func _finish_character_loading() -> void:
 func _start_level_preload() -> void:
 	if _level_preload_loader != null or _level_preload_packed != null:
 		return
+	if use_threaded_level_load:
+		_start_level_preload_thread()
+		return
 	var loader = ResourceLoader.load_interactive(LEVEL_SCENE_PATH)
 	if loader == null:
 		push_error("Failed to start level preload: " + str(LEVEL_SCENE_PATH))
 		return
 	_level_preload_loader = loader
+	_update_process_state()
+
+
+func _start_level_preload_thread() -> void:
+	if _level_thread != null:
+		return
+	if _level_thread_mutex == null:
+		_level_thread_mutex = Mutex.new()
+	_level_thread_done = false
+	_level_thread_error = ""
+	_level_thread_packed = null
+	_level_thread = Thread.new()
+	var err = _level_thread.start(self, "_thread_load_level")
+	if err != OK:
+		push_error("Failed to start level preload thread: " + str(err))
+		_level_thread = null
+		return
+	_update_process_state()
+
+
+func _thread_load_level(_userdata = null) -> void:
+	var loaded = load(LEVEL_SCENE_PATH)
+	var packed: PackedScene = null
+	var err = ""
+	if loaded == null or not (loaded is PackedScene):
+		err = "Level preload is not a PackedScene: " + str(LEVEL_SCENE_PATH)
+	else:
+		packed = loaded
+	_level_thread_mutex.lock()
+	_level_thread_packed = packed
+	_level_thread_error = err
+	_level_thread_done = true
+	_level_thread_mutex.unlock()
+
+
+func _poll_level_thread() -> void:
+	if _level_thread == null:
+		return
+	var done = false
+	var err = ""
+	var packed: PackedScene = null
+	_level_thread_mutex.lock()
+	done = _level_thread_done
+	err = _level_thread_error
+	packed = _level_thread_packed
+	_level_thread_mutex.unlock()
+	if not done:
+		return
+	_level_thread.wait_to_finish()
+	_level_thread = null
+	_level_thread_done = false
+	_level_thread_error = ""
+	_level_thread_packed = null
+	if err != "":
+		push_error(err)
+		_waiting_for_level_preload = false
+		_cancel_loading()
+		_update_process_state()
+		return
+	_level_preload_packed = packed
+	if _waiting_for_level_preload:
+		_waiting_for_level_preload = false
+		_begin_loading_from_packed(_level_preload_packed, LEVEL_SCENE_PATH, _loading_bar, _loading_label)
+	_update_process_state()
+
+
+func _stop_level_thread() -> void:
+	if _level_thread == null:
+		return
+	_level_thread.wait_to_finish()
+	_level_thread = null
+	_level_thread_done = false
+	_level_thread_error = ""
+	_level_thread_packed = null
 	_update_process_state()
 
 
@@ -371,6 +621,8 @@ func _maybe_hide_character_loading() -> void:
 	if not _character_loading_pending_hide:
 		return
 	if _character_loader != null:
+		return
+	if _character_thread != null:
 		return
 	if OS.get_ticks_msec() < _character_loading_hide_ready_msec:
 		return
@@ -411,6 +663,23 @@ func _begin_loading_from_packed(packed: PackedScene, scene_path: String, loading
 	_set_loading_ui(true)
 	if _active_loading_bar != null:
 		_active_loading_bar.value = 100.0
+	_update_process_state()
+
+
+func _begin_loading_wait_for_preload(scene_path: String, loading_bar: ProgressBar, loading_label: Label) -> void:
+	if _character_loader != null:
+		_cancel_character_loading()
+	_loader = null
+	_pending_packed = null
+	_is_loading = true
+	_current_scene_path = scene_path
+	_active_loading_bar = loading_bar
+	_active_loading_label = loading_label
+	_loading_show_start_msec = OS.get_ticks_msec()
+	_loading_finish_ready_msec = _loading_show_start_msec + LOADING_MIN_SHOW_MSEC
+	_finish_requested = false
+	_set_loading_ui(true)
+	_update_loading_bar()
 	_update_process_state()
 
 
@@ -890,6 +1159,7 @@ func _on_FairyFire_pressed() -> void:
 func _on__Back_pressed() -> void:
 	if _is_loading:
 		return
+	_waiting_for_level_preload = false
 	_begin_loading(MAIN_MENU_SCENE_PATH, _back_loading_bar, _back_loading_label)
 
 
@@ -903,5 +1173,9 @@ func _on_Start_Game_pressed() -> void:
 		return
 	if _level_preload_packed != null:
 		_begin_loading_from_packed(_level_preload_packed, LEVEL_SCENE_PATH, _loading_bar, _loading_label)
+		return
+	if use_threaded_level_load and _level_thread != null:
+		_waiting_for_level_preload = true
+		_begin_loading_wait_for_preload(LEVEL_SCENE_PATH, _loading_bar, _loading_label)
 		return
 	_begin_loading(LEVEL_SCENE_PATH, _loading_bar, _loading_label)
