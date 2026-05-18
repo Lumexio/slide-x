@@ -452,8 +452,8 @@ func _cache_character_scene(scene_path: String, packed: PackedScene) -> void:
 	_touch_character_cache(scene_path)
 	while _character_cache_order.size() > character_cache_limit:
 		var evict_path = _character_cache_order[0]
-		_character_cache_order.remove(0)
-		_character_cache.erase(evict_path)
+		var _removed = _character_cache_order.remove(0)
+		var _erased = _character_cache.erase(evict_path)
 
 
 func _touch_character_cache(scene_path: String) -> void:

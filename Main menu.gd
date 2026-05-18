@@ -14,7 +14,7 @@ func _ready() -> void:
 
 
 func _on_Start_pressed() -> void:
-	get_tree().change_scene("res://Main menu/Menu_character.tscn")
+	var _change_err = get_tree().change_scene("res://Main menu/Menu_character.tscn")
 
 
 func _on_Quit_pressed() -> void:

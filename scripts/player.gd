@@ -3,8 +3,11 @@ extends KinematicBody
 onready var camera_mount: Spatial = $camera_mount
 onready var camera: Camera = $camera_mount/Camera
 onready var camera_ray: RayCast = $camera_mount/CameraRay
-onready var animation_player: AnimationPlayer = $"visuals/meele-guy/AnimationPlayer"
+onready var animation_player: AnimationPlayer = null
 onready var visuals: Spatial = $visuals
+
+export(PackedScene) var character_scene = preload("res://scenes/characters/menu/kinetic-chad.tscn")
+export(Vector3) var character_rotation_degrees := Vector3(0, 180, 0)
 
 # Movement settings
 export(float) var walking_speed := 3.0
@@ -69,6 +72,7 @@ func _ready() -> void:
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	else:
 		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	_setup_character_visuals()
 	_pitch = clamp(camera_mount.rotation.x, deg2rad(min_pitch_degrees), deg2rad(max_pitch_degrees))
 	_target_yaw = rotation.y
 	_target_pitch = _pitch
@@ -80,6 +84,32 @@ func _ready() -> void:
 		camera_ray.cast_to = _camera_default_offset
 		camera_ray.exclude_parent = true
 		camera_ray.add_exception(self)
+
+
+func _setup_character_visuals() -> void:
+	if visuals == null:
+		return
+	var scene: PackedScene = character_scene
+	if scene == null:
+		scene = load("res://scenes/characters/menu/kinetic-chad.tscn") as PackedScene
+	if scene == null:
+		push_error("Failed to load player character scene.")
+		return
+	var instance = scene.instance()
+	if instance == null:
+		push_error("Failed to instance player character scene.")
+		return
+	instance.name = "character_model"
+	visuals.add_child(instance)
+	instance.rotation_degrees = character_rotation_degrees
+	animation_player = instance.get_node_or_null("AnimationPlayer")
+	if animation_player == null:
+		animation_player = instance.find_node("AnimationPlayer", true, false)
+	if animation_player == null:
+		push_error("Player character is missing AnimationPlayer.")
+	var old_model = visuals.get_node_or_null("meele-guy")
+	if old_model != null:
+		old_model.queue_free()
 
 func _input(event: InputEvent) -> void:
 	if not mouse_look_enabled:
@@ -118,11 +148,11 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("jump") and not is_attacking:
 		if is_on_floor():
 			velocity.y = JUMP_VELOCITY
-			animation_player.play("jumping", locomotion_blend_time)
+			play_anim_if_not("jumping")
 			jump_count += 1
 		elif jump_count <= extra_jumps:
 			velocity.y = JUMP_VELOCITY * 1.5 
-			animation_player.play("jumping", locomotion_blend_time)
+			play_anim_if_not("jumping")
 			jump_count += 1
 
 	# 4. Movement Logic
@@ -283,6 +313,12 @@ func _get_primary_joypad() -> int:
 
 # Updated to handle independent Dash Time
 func play_action(anim_name: String, dash_speed := 0.0, dash_time := 0.0, anim_speed := 1.0):
+	if animation_player == null:
+		return
+	var anim = animation_player.get_animation(anim_name)
+	if anim == null:
+		push_error("Missing attack animation: " + anim_name)
+		return
 	is_attacking = true
 	
 	# Set the speed before playing
@@ -296,8 +332,12 @@ func play_action(anim_name: String, dash_speed := 0.0, dash_time := 0.0, anim_sp
 		current_attack_dash_speed = 0.0
 	
 	# Wait for animation
-	if animation_player.is_playing():
-		yield(animation_player, "animation_finished")
+	var wait_time = anim.length
+	if anim.loop or wait_time <= 0.0:
+		wait_time = 0.35
+	else:
+		wait_time = wait_time / max(anim_speed, 0.01)
+	yield(get_tree().create_timer(wait_time), "timeout")
 	
 	# RESET speed to normal so walk/run aren't affected
 	animation_player.playback_speed = 1.0
@@ -305,5 +345,7 @@ func play_action(anim_name: String, dash_speed := 0.0, dash_time := 0.0, anim_sp
 	is_attacking = false
 
 func play_anim_if_not(anim_name: String) -> void:
+	if animation_player == null:
+		return
 	if animation_player.current_animation != anim_name:
 		animation_player.play(anim_name, locomotion_blend_time)

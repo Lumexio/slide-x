@@ -134,7 +134,7 @@ func _setup_post_attach_timer() -> void:
 	_memory_post_attach_timer.autostart = false
 	_memory_post_attach_timer.wait_time = _get_post_attach_interval()
 	add_child(_memory_post_attach_timer)
-	_memory_post_attach_timer.connect("timeout", self, "_on_post_attach_sample")
+	var _connect_err = _memory_post_attach_timer.connect("timeout", self, "_on_post_attach_sample")
 
 
 func _stop_post_attach_sampling() -> void:
