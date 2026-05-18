@@ -12,6 +12,7 @@ onready var _loading_label: Label = $"WindowStartGame/LoadingLabel"
 const NEXT_SCENE_PATH = "res://gui/menu_character.tscn"
 const LOADING_SCENE_PATH = "res://gui/loading_screen.tscn"
 const LOADING_MIN_SHOW_MSEC := 200
+const THREAD_PULSE_PERIOD_MSEC := 900.0
 
 var _focus_index := 0
 var _loader: ResourceInteractiveLoader = null
@@ -30,6 +31,7 @@ var _preload_thread_done := false
 var _preload_thread_error := ""
 var _preload_thread_packed: PackedScene = null
 var _waiting_for_preload := false
+var _thread_pulse_start_msec := 0
 
 export(bool) var use_threaded_menu_load := true
 
@@ -67,6 +69,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _process(_delta: float) -> void:
+	if _waiting_for_preload and _is_loading and _loader == null and _pending_packed == null and _pending_scene_path == "":
+		_update_thread_loading_bar()
 	if _pending_packed != null or _pending_scene_path != "":
 		if OS.get_ticks_msec() >= _loading_finish_ready_msec:
 			if _pending_packed != null:
@@ -189,9 +193,19 @@ func _begin_loading_wait_for_preload() -> void:
 	_is_loading = true
 	_loading_show_start_msec = OS.get_ticks_msec()
 	_loading_finish_ready_msec = _loading_show_start_msec + LOADING_MIN_SHOW_MSEC
+	_thread_pulse_start_msec = _loading_show_start_msec
 	_set_loading_ui(true)
 	_update_loading_bar()
 	_update_process_state()
+
+
+func _update_thread_loading_bar() -> void:
+	if _loading_bar == null:
+		return
+	var elapsed = float(OS.get_ticks_msec() - _thread_pulse_start_msec)
+	var phase = (elapsed % THREAD_PULSE_PERIOD_MSEC) / THREAD_PULSE_PERIOD_MSEC
+	var pulse = 0.5 - 0.5 * cos(phase * TAU)
+	_loading_bar.value = clamp(pulse * 100.0, 0.0, 100.0)
 
 func _start_preload() -> void:
 	if _preload_loader != null or _preload_packed != null:
