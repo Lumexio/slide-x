@@ -24,14 +24,27 @@ var _loading_show_start_msec := 0
 var _loading_finish_ready_msec := 0
 var _pending_packed: PackedScene = null
 var _pending_scene_path := ""
+var _preload_thread: Thread = null
+var _preload_thread_mutex: Mutex = null
+var _preload_thread_done := false
+var _preload_thread_error := ""
+var _preload_thread_packed: PackedScene = null
+var _waiting_for_preload := false
+
+export(bool) var use_threaded_menu_load := true
 
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	_preload_thread_mutex = Mutex.new()
 	_focus_index = 0
 	_apply_focus()
 	_start_preload()
+
+
+func _exit_tree() -> void:
+	_stop_preload_thread()
 	
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -93,6 +106,9 @@ func _process(_delta: float) -> void:
 		push_error("Preload failed with error code: " + str(preload_err))
 		_preload_loader = null
 		_update_process_state()
+
+	if _preload_thread != null:
+		_poll_preload_thread()
 
 
 func _find_initial_focus_index() -> int:
@@ -164,14 +180,104 @@ func _begin_loading_for_scene_path(scene_path: String) -> void:
 		_loading_bar.value = 100.0
 	_update_process_state()
 
+
+func _begin_loading_wait_for_preload() -> void:
+	_pending_scene_path = ""
+	_pending_packed = null
+	_loader = null
+	_finish_requested = false
+	_is_loading = true
+	_loading_show_start_msec = OS.get_ticks_msec()
+	_loading_finish_ready_msec = _loading_show_start_msec + LOADING_MIN_SHOW_MSEC
+	_set_loading_ui(true)
+	_update_loading_bar()
+	_update_process_state()
+
 func _start_preload() -> void:
 	if _preload_loader != null or _preload_packed != null:
 		return
 	_preload_started_msec = OS.get_ticks_msec()
+	if use_threaded_menu_load:
+		_start_preload_thread()
+		return
 	_preload_loader = ResourceLoader.load_interactive(NEXT_SCENE_PATH)
 	if _preload_loader == null:
 		push_error("Failed to start preload for scene: " + str(NEXT_SCENE_PATH))
 		return
+	_update_process_state()
+
+
+func _start_preload_thread() -> void:
+	if _preload_thread != null:
+		return
+	if _preload_thread_mutex == null:
+		_preload_thread_mutex = Mutex.new()
+	_preload_thread_done = false
+	_preload_thread_error = ""
+	_preload_thread_packed = null
+	_preload_thread = Thread.new()
+	var err = _preload_thread.start(self, "_thread_preload_menu_character")
+	if err != OK:
+		push_error("Failed to start preload thread: " + str(err))
+		_preload_thread = null
+		return
+	_update_process_state()
+
+
+func _thread_preload_menu_character(_userdata = null) -> void:
+	var loaded = load(NEXT_SCENE_PATH)
+	var packed: PackedScene = null
+	var err = ""
+	if loaded == null or not (loaded is PackedScene):
+		err = "Preload is not a PackedScene: " + str(NEXT_SCENE_PATH)
+	else:
+		packed = loaded
+	_preload_thread_mutex.lock()
+	_preload_thread_packed = packed
+	_preload_thread_error = err
+	_preload_thread_done = true
+	_preload_thread_mutex.unlock()
+
+
+func _poll_preload_thread() -> void:
+	if _preload_thread == null:
+		return
+	var done = false
+	var err = ""
+	var packed: PackedScene = null
+	_preload_thread_mutex.lock()
+	done = _preload_thread_done
+	err = _preload_thread_error
+	packed = _preload_thread_packed
+	_preload_thread_mutex.unlock()
+	if not done:
+		return
+	_preload_thread.wait_to_finish()
+	_preload_thread = null
+	_preload_thread_done = false
+	_preload_thread_error = ""
+	_preload_thread_packed = null
+	if err != "":
+		push_error(err)
+		_waiting_for_preload = false
+		_cancel_loading()
+		_update_process_state()
+		return
+	_preload_packed = packed
+	if _waiting_for_preload:
+		_waiting_for_preload = false
+		_begin_loading_from_packed(_preload_packed)
+	_update_process_state()
+
+
+func _stop_preload_thread() -> void:
+	if _preload_thread == null:
+		return
+	_preload_thread.wait_to_finish()
+	_preload_thread = null
+	_preload_thread_done = false
+	_preload_thread_error = ""
+	_preload_thread_packed = null
 	_update_process_state()
 
 
@@ -246,7 +352,7 @@ func _cancel_loading() -> void:
 
 
 func _update_process_state() -> void:
-	set_process(_loader != null or _preload_loader != null or _pending_packed != null or _pending_scene_path != "")
+	set_process(_loader != null or _preload_loader != null or _preload_thread != null or _pending_packed != null or _pending_scene_path != "")
 
 
 func _set_loading_ui(enabled: bool) -> void:
@@ -287,6 +393,10 @@ func _on_Start_pressed() -> void:
 			return
 	if _preload_packed != null:
 		_begin_loading_from_packed(_preload_packed)
+		return
+	if use_threaded_menu_load and _preload_thread != null:
+		_waiting_for_preload = true
+		_begin_loading_wait_for_preload()
 		return
 	_begin_loading(NEXT_SCENE_PATH)
 		
