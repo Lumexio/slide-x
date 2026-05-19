@@ -18,6 +18,16 @@ var _preload_current_path := ""
 var _preload_stage_name := ""
 var preload_vram_cap_mb := 24.0
 var preload_tex_cap_mb := 22.0
+export(bool) var vita_perf_enabled := true
+export(int) var vita_target_fps := 30
+export(bool) var vita_reduce_physics_fps := true
+export(int) var vita_physics_fps := 60
+export(bool) var vita_disable_shadows := true
+export(bool) var vita_force_baked_lights := true
+export(bool) var vita_reduce_particles := true
+export(float) var vita_particles_scale := 0.35
+export(bool) var vita_simplify_materials := true
+var _vita_perf_initialized := false
 
 func set_game_controller(controller: Node) -> void:
 	game_controller = controller
@@ -194,6 +204,114 @@ func _print_memory() -> void:
 	print("RAM static=", static_mb, "MB  dynamic=", dynamic_mb, "MB",
 		  "  VRAM=", vram_mb, "MB  tex=", tex_mb, "MB  vtx=", vtx_mb, "MB")
 
+
+func _maybe_apply_vita_perf() -> void:
+	if _vita_perf_initialized:
+		return
+	if not vita_perf_enabled or OS.get_name() != "Vita":
+		return
+	_vita_perf_initialized = true
+	if vita_target_fps > 0:
+		Engine.target_fps = vita_target_fps
+	if vita_reduce_physics_fps and vita_physics_fps > 0:
+		Engine.iterations_per_second = vita_physics_fps
+	_apply_vita_perf_to_tree(get_tree().root)
+	var _err = get_tree().connect("node_added", self, "_on_vita_node_added")
+
+
+func _on_vita_node_added(node: Node) -> void:
+	_apply_vita_perf_to_node(node)
+
+
+func _apply_vita_perf_to_tree(root: Node) -> void:
+	if root == null:
+		return
+	_apply_vita_perf_to_node(root)
+	for child in root.get_children():
+		_apply_vita_perf_to_tree(child)
+
+
+func _apply_vita_perf_to_node(node: Node) -> void:
+	if node == null:
+		return
+	if vita_disable_shadows:
+		if node is Light and _has_property(node, "shadow_enabled"):
+			node.set("shadow_enabled", false)
+		if node is GeometryInstance and _has_property(node, "cast_shadow"):
+			node.set("cast_shadow", GeometryInstance.SHADOW_CASTING_SETTING_OFF)
+	if vita_force_baked_lights:
+		if node is Light and _has_property(node, "bake_mode"):
+			node.set("bake_mode", Light.BAKE_ALL)
+	if vita_reduce_particles:
+		if node is Particles or node is CPUParticles:
+			_scale_particles_amount(node)
+		elif node is Particles2D or node is CPUParticles2D:
+			_scale_particles_amount(node)
+	if vita_simplify_materials and node is MeshInstance:
+		_simplify_mesh_materials(node)
+
+
+func _scale_particles_amount(node: Node) -> void:
+	if not _has_property(node, "amount"):
+		return
+	if node.has_meta("vita_original_amount"):
+		return
+	var original = int(node.get("amount"))
+	node.set_meta("vita_original_amount", original)
+	var scaled = max(1, int(round(float(original) * vita_particles_scale)))
+	node.set("amount", scaled)
+
+
+func _simplify_mesh_materials(mesh_instance: MeshInstance) -> void:
+	if mesh_instance.material_override != null:
+		_simplify_material(mesh_instance.material_override)
+	var mesh = mesh_instance.mesh
+	if mesh == null:
+		return
+	for i in range(mesh.get_surface_count()):
+		var mat = mesh.surface_get_material(i)
+		if mat != null:
+			_simplify_material(mat)
+
+
+func _simplify_material(material: Material) -> void:
+	if material == null:
+		return
+	if material.has_meta("vita_simplified"):
+		return
+	material.set_meta("vita_simplified", true)
+	if material is SpatialMaterial:
+		var sm = material as SpatialMaterial
+		if _has_property(sm, "normal_enabled"):
+			sm.normal_enabled = false
+		if _has_property(sm, "normal_texture"):
+			sm.normal_texture = null
+		if _has_property(sm, "roughness_texture"):
+			sm.roughness_texture = null
+		if _has_property(sm, "metallic_texture"):
+			sm.metallic_texture = null
+		if _has_property(sm, "detail_enabled"):
+			sm.detail_enabled = false
+		if _has_property(sm, "detail_albedo"):
+			sm.detail_albedo = null
+		if _has_property(sm, "detail_normal"):
+			sm.detail_normal = null
+		if _has_property(sm, "clearcoat_enabled"):
+			sm.clearcoat_enabled = false
+		if _has_property(sm, "subsurf_scatter_enabled"):
+			sm.subsurf_scatter_enabled = false
+		if _has_property(sm, "refraction_enabled"):
+			sm.refraction_enabled = false
+		if _has_property(sm, "params_anisotropy_enabled"):
+			sm.params_anisotropy_enabled = false
+
+
+func _has_property(node: Object, prop_name: String) -> bool:
+	for info in node.get_property_list():
+		if info.name == prop_name:
+			return true
+	return false
+
 func _ready() -> void:
 	var t := Timer.new()
 	t.wait_time = 2.0
@@ -201,3 +319,4 @@ func _ready() -> void:
 	t.one_shot = false
 	add_child(t)
 	t.connect("timeout", self, "_print_memory")
+	_maybe_apply_vita_perf()
