@@ -64,6 +64,14 @@ func _start_env_load() -> void:
 	if _env_loader != null:
 		return
 	_reset_memory_peak()
+	if GameGlobal != null and GameGlobal.has_method("get_preloaded_scene"):
+		var cached = GameGlobal.get_preloaded_scene(ENV_SCENE_PATH)
+		if cached != null:
+			_instance_env(cached)
+			_set_env_loading_visible(false)
+			_start_post_attach_sampling()
+			set_process(false)
+			return
 	_push_debug_line("env_load_begin")
 	_env_loader = ResourceLoader.load_interactive(ENV_SCENE_PATH)
 	if _env_loader == null:

@@ -277,6 +277,14 @@ func _begin_loading(scene_path: String, loading_bar: ProgressBar, loading_label:
 func _start_menu_env_load() -> void:
 	if _menu_env_loaded or _menu_env_loader != null:
 		return
+	if GameGlobal != null and GameGlobal.has_method("get_preloaded_scene"):
+		var cached = GameGlobal.get_preloaded_scene(MENU_ENV_SCENE_PATH)
+		if cached != null:
+			_instance_menu_env(cached)
+			_menu_env_loaded = true
+			_set_menu_env_loading_visible(false)
+			_push_debug_line("menu_env_cached")
+			return
 	var loader = ResourceLoader.load_interactive(MENU_ENV_SCENE_PATH)
 	if loader == null:
 		push_error("Failed to start menu environment loading: " + str(MENU_ENV_SCENE_PATH))
@@ -365,6 +373,10 @@ func _start_character_loading(character_name: String) -> void:
 		return
 	_character_scene_path = scene_path
 	var cached := _get_cached_character_scene(scene_path)
+	if cached == null and GameGlobal != null and GameGlobal.has_method("get_preloaded_scene"):
+		cached = GameGlobal.get_preloaded_scene(scene_path)
+		if cached != null:
+			_cache_character_scene(scene_path, cached)
 	if cached != null:
 		_character_loader = null
 		_character_finish_requested = false

@@ -49,6 +49,8 @@ func _ready() -> void:
 	_start_preload()
 	if _debug_label != null:
 		_debug_label.visible = show_debug_overlay
+	if GameGlobal != null and GameGlobal.has_method("start_staged_preload"):
+		GameGlobal.start_staged_preload()
 
 
 func _exit_tree() -> void:
@@ -220,6 +222,12 @@ func _update_thread_loading_bar() -> void:
 func _start_preload() -> void:
 	if _preload_loader != null or _preload_packed != null:
 		return
+	if GameGlobal != null and GameGlobal.has_method("get_preloaded_scene"):
+		var cached = GameGlobal.get_preloaded_scene(NEXT_SCENE_PATH)
+		if cached != null:
+			_preload_packed = cached
+			_update_process_state()
+			return
 	_preload_started_msec = OS.get_ticks_msec()
 	if use_threaded_menu_load:
 		_start_preload_thread()
