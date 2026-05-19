@@ -26,7 +26,17 @@ var detached_world3d_scene_path := ""
 var detached_world2d_scene_path := ""
 var detached_ui_scene_path := ""
 
+# When true, change_world3d_scene_from_packed hides the old scene, renders
+# one blank frame (so the user sees a cut-to-black), then calls add_child.
+# This turns the 750 ms frozen frame into an imperceptible black flash.
+export(bool) var use_deferred_scene_add: bool = true
+
+var _transition_layer: CanvasLayer = null
+var _transition_rect: ColorRect = null
+var _deferred_swap_in_progress: bool = false
+
 func _ready() -> void:
+	_setup_transition_overlay()
 	if not world3d_path:
 		push_error("GameController: world3d_path is not set.")
 	elif not has_node(world3d_path):
@@ -63,13 +73,16 @@ func change_world3d_scene(scene_path: String, unload_mode: int = UnloadMode.DELE
 	)
 
 func change_world3d_scene_from_packed(packed_scene: PackedScene, unload_mode: int = UnloadMode.DELETE) -> void:
-	current_world3d_scene = _change_scene_from_packed(
-		packed_scene,
-		world3d_container,
-		current_world3d_scene,
-		"world3d",
-		unload_mode
-	)
+	if use_deferred_scene_add:
+		_swap_scene_deferred(packed_scene, world3d_container, "world3d", unload_mode)
+	else:
+		current_world3d_scene = _change_scene_from_packed(
+			packed_scene,
+			world3d_container,
+			current_world3d_scene,
+			"world3d",
+			unload_mode
+		)
 
 func change_world2d_scene(scene_path: String, unload_mode: int = UnloadMode.DELETE) -> void:
 	current_world2d_scene = _change_scene(
@@ -314,6 +327,106 @@ func _scene_path(scene_node: Node) -> String:
 	if scene_node != null and is_instance_valid(scene_node):
 		return scene_node.filename
 	return ""
+
+# ---------------------------------------------------------------------------
+# Deferred scene swap — eliminates the frozen-frame stall on add_child
+# ---------------------------------------------------------------------------
+
+# Coroutine: instances the new scene, unloads the old one, shows a black
+# overlay, yields one frame so the engine renders the blank frame, then calls
+# add_child (the expensive step) and hides the overlay.
+func _swap_scene_deferred(packed_scene: PackedScene, container: Node, layer_name: String, unload_mode: int) -> void:
+	if _deferred_swap_in_progress:
+		push_warning("GameController: deferred swap already in progress; ignoring duplicate request on '" + layer_name + "'.")
+		return
+	if container == null:
+		push_error("GameController: container for layer '" + layer_name + "' is null.")
+		return
+	if packed_scene == null:
+		push_error("GameController: null PackedScene for deferred swap on layer '" + layer_name + "'.")
+		return
+
+	var new_scene: Node = packed_scene.instance()
+	if new_scene == null:
+		push_error("GameController: failed to instance PackedScene for layer '" + layer_name + "'.")
+		return
+
+	_deferred_swap_in_progress = true
+
+	if GameGlobal != null and GameGlobal.has_method("trim_preloaded_scene_cache"):
+		GameGlobal.trim_preloaded_scene_cache()
+	_free_all_detached_scenes()
+
+	var old_scene: Node = _get_current_scene(layer_name)
+	if old_scene != null and is_instance_valid(old_scene):
+		_unload_current_scene(old_scene, container, layer_name, unload_mode)
+
+	# Register reference immediately so external code can query the new scene
+	# even before it enters the tree.
+	_set_current_scene(layer_name, new_scene)
+
+	# Black overlay — gives the engine a frame to composite before the stall.
+	_show_transition()
+	yield(get_tree(), "idle_frame")
+
+	# This is the expensive call: triggers _enter_tree + _ready on every node.
+	if is_instance_valid(new_scene) and is_instance_valid(container):
+		container.add_child(new_scene)
+
+	# Hold the overlay for one more frame to mask any residual shader-
+	# compilation stall on the first render of the new scene.
+	yield(get_tree(), "idle_frame")
+	_hide_transition()
+	_deferred_swap_in_progress = false
+	_debug_print_state(layer_name)
+
+
+func _get_current_scene(layer_name: String) -> Node:
+	if layer_name == "world3d":
+		return current_world3d_scene
+	elif layer_name == "world2d":
+		return current_world2d_scene
+	elif layer_name == "ui":
+		return current_ui_scene
+	return null
+
+
+func _set_current_scene(layer_name: String, scene: Node) -> void:
+	if layer_name == "world3d":
+		current_world3d_scene = scene
+	elif layer_name == "world2d":
+		current_world2d_scene = scene
+	elif layer_name == "ui":
+		current_ui_scene = scene
+
+
+func _setup_transition_overlay() -> void:
+	_transition_layer = CanvasLayer.new()
+	_transition_layer.layer = 128  # above everything
+	add_child(_transition_layer)
+	_transition_rect = ColorRect.new()
+	_transition_rect.color = Color(0.0, 0.0, 0.0, 1.0)
+	_transition_rect.anchor_left = 0.0
+	_transition_rect.anchor_top = 0.0
+	_transition_rect.anchor_right = 1.0
+	_transition_rect.anchor_bottom = 1.0
+	_transition_rect.margin_left = 0.0
+	_transition_rect.margin_top = 0.0
+	_transition_rect.margin_right = 0.0
+	_transition_rect.margin_bottom = 0.0
+	_transition_rect.visible = false
+	_transition_layer.add_child(_transition_rect)
+
+
+func _show_transition() -> void:
+	if _transition_rect != null:
+		_transition_rect.visible = true
+
+
+func _hide_transition() -> void:
+	if _transition_rect != null:
+		_transition_rect.visible = false
+
 
 func _print_memory() -> void:
 	var static_mb = OS.get_static_memory_usage() / 1024.0 / 1024.0

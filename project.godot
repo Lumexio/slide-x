@@ -29,9 +29,17 @@ config/icon="res://icon.png"
 GameGlobal="*res://autoload/game_global.gd"
 MenuCharacterCache="*res://autoload/menu_character_cache.gd"
 
+[debug]
+
+settings/stdout/print_fps=true
+
 [editor_plugins]
 
 enabled=PoolStringArray( "res://addons/silicon.3d.anaglyph/plugin.cfg" )
+
+[global]
+
+infered=false
 
 [gui]
 
@@ -125,6 +133,14 @@ elbow_mod={
 "events": [ Object(InputEventJoypadButton,"resource_local_to_scene":false,"resource_name":"","device":0,"button_index":7,"pressure":0.0,"pressed":false,"script":null)
  ]
 }
+
+[layer_names]
+
+3d_physics/layer_1="world"
+3d_physics/layer_2="player"
+3d_physics/layer_3="enemy"
+3d_physics/layer_4="props"
+3d_physics/layer_5="triggers"
 
 [physics]
 

@@ -144,10 +144,14 @@ func _ready() -> void:
 		MenuCharacterCache.set_menu_lod(use_menu_lod)
 		var _err_loaded = MenuCharacterCache.connect("character_loaded", self, "_on_character_cache_loaded")
 		var _err_failed = MenuCharacterCache.connect("character_load_failed", self, "_on_character_cache_failed")
-	_select_character("AkimboBoy", false)
 	_focus_index = _find_initial_focus_index()
 	_apply_focus()
 	_update_process_state()
+	# Defer character loading to the next frame so the scene-tree entry cost
+	# of menu_character.tscn itself settles before we start attaching more
+	# 3D nodes (character model + environment).
+	yield(get_tree(), "idle_frame")
+	_select_character("AkimboBoy", false)
 	_log_vita_memory("menu_character_ready")
 
 
@@ -1205,10 +1209,12 @@ func _optimize_menu_character(root: Node) -> void:
 			stack.append(child)
 
 
-func _apply_character_visibility_range(root: Node) -> void:
-	if root == null:
-		return
-	_apply_visibility_range_recursive(root, CHARACTER_VISIBILITY_RANGE_BEGIN, CHARACTER_VISIBILITY_RANGE_END)
+func _apply_character_visibility_range(_root: Node) -> void:
+	# visibility_range_begin / _range_end are Godot 4 properties; they do not
+	# exist in Godot 3.5 GLES2.  The recursive walk was scanning the full
+	# property list of every VisualInstance and always returning false — pure
+	# overhead.  LOD is handled by the LOD system in level_1_env.gd instead.
+	pass
 
 
 func _apply_character_rotation(instance: Spatial, character_name: String) -> void:
