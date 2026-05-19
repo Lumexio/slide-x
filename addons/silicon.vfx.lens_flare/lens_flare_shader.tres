@@ -63,7 +63,7 @@ void fragment() {
 	vec2 texcoord = 1.0 - SCREEN_UV;
 	vec2 ghostVec = (vec2(0.5) - texcoord) * ghost_dispersal;
 	
-	float pixelSizeX = SCREEN_PIXEL_SIZE.x;
+	float pixelSizeX = 1.0 / float(textureSize(SCREEN_TEXTURE, 0).x);
 	
 	float distortion = pixelSizeX * distort;
 	vec2 direction = normalize(ghostVec);

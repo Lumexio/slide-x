@@ -1,4 +1,4 @@
-[gd_scene load_steps=32 format=2]
+[gd_scene load_steps=33 format=2]
 
 [ext_resource path="res://gui/CSGSphere.gd" type="Script" id=1]
 [ext_resource path="res://assets/RetroWindowsGUI/Windows_Button_Focus.png" type="Texture" id=2]
@@ -156,6 +156,11 @@ margin_left = 5.0
 margin_right = 5.0
 margin_top = 5.0
 margin_bottom = 5.0
+
+[sub_resource type="DynamicFont" id=26]
+size = 18
+use_filter = true
+font_data = ExtResource( 13 )
 
 [node name="main_menu" type="Spatial"]
 script = ExtResource( 6 )
@@ -328,6 +333,19 @@ valign = 1
 position = Vector2( 19, 14.25 )
 scale = Vector2( 1.86667, 2.13636 )
 texture = ExtResource( 14 )
+
+[node name="DebugOverlay" type="CanvasLayer" parent="."]
+
+[node name="DebugLabel" type="Label" parent="DebugOverlay"]
+visible = false
+margin_left = 8.0
+margin_top = 8.0
+margin_right = 460.0
+margin_bottom = 140.0
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+custom_fonts/font = SubResource( 26 )
+autowrap = true
+text = ""
 
 [connection signal="pressed" from="TaskBar/Quit" to="." method="_on_Quit_pressed"]
 [connection signal="pressed" from="WindowStartGame/StartButton" to="." method="_on_Start_pressed"]

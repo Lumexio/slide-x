@@ -15,6 +15,9 @@ onready var _back_loading_label: Label = $"TaskBar/BackLoadingLabel"
 onready var _character_loading_label: Label = $"TaskBar/CharacterLoadingLabel"
 onready var _character_anchor: Spatial = $"CharacterAnchor"
 onready var _character_light: Light = $"SpotLight"
+onready var _debug_label: Label = get_node_or_null("DebugOverlay/DebugLabel") as Label
+onready var _menu_env_anchor: Spatial = $"EnvAnchor"
+onready var _menu_env_loading_label: Label = get_node_or_null("EnvCanvas/EnvLoadingLabel") as Label
 
 var current_character := ""
 var _focus_index := 0
@@ -50,6 +53,7 @@ var _character_memory_peak_vtx := 0.0
 var _character_post_attach_remaining := 0.0
 var _character_post_attach_token := 0
 var _character_last_loaded_from_cache := false
+var _character_post_attach_last_sample_msec := 0
 var _loading_show_start_msec := 0
 var _loading_finish_ready_msec := 0
 var _pending_packed: PackedScene = null
@@ -72,6 +76,9 @@ var _character_thread_result_token := -1
 var _character_thread_scene_path := ""
 var _character_thread_pending_scene_path := ""
 var _character_thread_pending_character := ""
+var _debug_lines: Array = []
+var _menu_env_loader: ResourceInteractiveLoader = null
+var _menu_env_loaded := false
 
 export(bool) var use_menu_lod := true
 export(int) var character_cache_limit := 1
@@ -82,6 +89,7 @@ export(bool) var menu_character_hide_joints := true
 export(bool) var menu_character_disable_shadows := true
 export(bool) var use_threaded_level_load := true
 export(bool) var use_threaded_character_load := true
+export(bool) var show_debug_overlay := true
 
 const CHARACTER_ORDER = ["AkimboBoy", "KineticChad", "FairyFire"]
 const CHARACTER_SCENES = {
@@ -117,20 +125,25 @@ const CHARACTER_SLIDE_TIME = 0.25
 const CHARACTER_VISIBILITY_RANGE_BEGIN = 0.0
 const CHARACTER_VISIBILITY_RANGE_END = 12.0
 const LEVEL_SCENE_PATH = "res://scenes/levels/level_1.tscn"
+const MENU_ENV_SCENE_PATH = "res://scenes/levels/menu_env.tscn"
 const MAIN_MENU_SCENE_PATH = "res://gui/main_menu.tscn"
 const LOADING_SCENE_PATH = "res://gui/loading_screen.tscn"
 const LOADING_MIN_SHOW_MSEC := 200
 const CHARACTER_LOADING_MIN_SHOW_MSEC := 200
+const DEBUG_MAX_LINES := 8
 
 
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	_level_thread_mutex = Mutex.new()
 	_character_thread_mutex = Mutex.new()
+	if _debug_label != null:
+		_debug_label.visible = show_debug_overlay
 	_select_character("AkimboBoy", false)
 	_focus_index = _find_initial_focus_index()
 	_apply_focus()
 	_update_process_state()
+	_log_vita_memory("menu_character_ready")
 
 
 func _exit_tree() -> void:
@@ -199,7 +212,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_tree().set_input_as_handled()
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if _loader != null:
 		_poll_scene_loader()
 	elif _pending_packed != null:
@@ -214,6 +227,9 @@ func _process(_delta: float) -> void:
 		_poll_level_thread()
 	_maybe_finish_loading()
 	_maybe_hide_character_loading()
+	_poll_character_post_attach_sampling(delta)
+	if _menu_env_loader != null:
+		_poll_menu_env_loader()
 
 
 func _find_initial_focus_index() -> int:
@@ -258,8 +274,60 @@ func _begin_loading(scene_path: String, loading_bar: ProgressBar, loading_label:
 	_update_process_state()
 
 
+func _start_menu_env_load() -> void:
+	if _menu_env_loaded or _menu_env_loader != null:
+		return
+	var loader = ResourceLoader.load_interactive(MENU_ENV_SCENE_PATH)
+	if loader == null:
+		push_error("Failed to start menu environment loading: " + str(MENU_ENV_SCENE_PATH))
+		_set_menu_env_loading_visible(false)
+		return
+	_menu_env_loader = loader
+	_set_menu_env_loading_visible(true)
+	_push_debug_line("menu_env_begin")
+	_update_process_state()
+
+
+func _poll_menu_env_loader() -> void:
+	var err = _menu_env_loader.poll()
+	if err == OK:
+		return
+	if err == ERR_FILE_EOF:
+		var packed = _menu_env_loader.get_resource()
+		_menu_env_loader = null
+		_instance_menu_env(packed)
+		_set_menu_env_loading_visible(false)
+		_menu_env_loaded = true
+		_push_debug_line("menu_env_done")
+		_update_process_state()
+		return
+	push_error("Menu environment load failed with error code: " + str(err))
+	_menu_env_loader = null
+	_set_menu_env_loading_visible(false)
+	_update_process_state()
+
+
+func _instance_menu_env(packed: PackedScene) -> void:
+	if packed == null or not (packed is PackedScene):
+		push_error("Menu environment resource is not a PackedScene.")
+		return
+	var instance = packed.instance()
+	if instance == null:
+		push_error("Failed to instance menu environment scene.")
+		return
+	if _menu_env_anchor != null:
+		_menu_env_anchor.add_child(instance)
+	else:
+		add_child(instance)
+
+
+func _set_menu_env_loading_visible(visible: bool) -> void:
+	if _menu_env_loading_label != null:
+		_menu_env_loading_label.visible = visible
+
+
 func _update_process_state() -> void:
-	set_process(_loader != null or _pending_packed != null or _character_loader != null or _character_thread != null or _level_preload_loader != null or _level_thread != null or _character_loading_pending_hide)
+	set_process(_loader != null or _pending_packed != null or _character_loader != null or _character_thread != null or _level_preload_loader != null or _level_thread != null or _character_loading_pending_hide or _character_post_attach_remaining > 0.0 or _menu_env_loader != null)
 
 
 func _poll_scene_loader() -> void:
@@ -289,6 +357,7 @@ func _start_character_loading(character_name: String) -> void:
 	_reset_character_memory_peak()
 	_sample_character_memory_peak()
 	_show_character_loading_ui()
+	_log_vita_memory("character_load_begin " + character_name)
 	var scene_path = _resolve_character_scene_path(character_name)
 	if scene_path == "":
 		push_error("Unknown character scene: " + str(character_name))
@@ -309,9 +378,11 @@ func _start_character_loading(character_name: String) -> void:
 		_instance_character(cached_instance)
 		_character_load_elapsed_msec = OS.get_ticks_msec() - _character_load_start_msec
 		_sample_character_memory_peak()
+		_log_vita_memory("character_load_cached " + character_name)
 		_request_character_loading_hide()
 		_start_character_post_attach_sampling()
 		_start_level_preload()
+		_start_menu_env_load()
 		_update_process_state()
 		return
 	if use_threaded_character_load:
@@ -495,9 +566,11 @@ func _finish_character_loading_from_packed(packed: PackedScene) -> void:
 	_instance_character(instance)
 	_character_load_elapsed_msec = OS.get_ticks_msec() - _character_load_start_msec
 	_sample_character_memory_peak()
+	_log_vita_memory("character_load_done " + current_character)
 	_request_character_loading_hide()
 	_start_character_post_attach_sampling()
 	_start_level_preload()
+	_start_menu_env_load()
 
 
 func _start_level_preload() -> void:
@@ -721,7 +794,7 @@ func _cache_character_scene(scene_path: String, packed: PackedScene) -> void:
 	_touch_character_cache(scene_path)
 	while _character_cache_order.size() > character_cache_limit:
 		var evict_path = _character_cache_order[0]
-		var _removed = _character_cache_order.remove(0)
+		_character_cache_order.remove(0)
 		var _erased = _character_cache.erase(evict_path)
 
 
@@ -756,6 +829,7 @@ func _sample_character_memory_peak() -> void:
 func _invalidate_character_post_attach_sampling() -> void:
 	_character_post_attach_token += 1
 	_character_post_attach_remaining = 0.0
+	_character_post_attach_last_sample_msec = 0
 
 
 func _start_character_post_attach_sampling() -> void:
@@ -764,23 +838,25 @@ func _start_character_post_attach_sampling() -> void:
 		_print_character_metrics()
 		return
 	_character_post_attach_remaining = character_memory_post_attach_window
-	var token = _character_post_attach_token
-	call_deferred("_poll_character_post_attach_sampling", token)
+	_character_post_attach_last_sample_msec = OS.get_ticks_msec()
+	_update_process_state()
 
 
-func _poll_character_post_attach_sampling(token: int) -> void:
+func _poll_character_post_attach_sampling(delta: float) -> void:
+	if _character_post_attach_remaining <= 0.0:
+		return
 	var interval = character_memory_sample_interval
 	if interval <= 0.0:
 		interval = 0.05
-	while token == _character_post_attach_token:
-		yield(get_tree().create_timer(interval), "timeout")
-		if token != _character_post_attach_token:
-			return
-		_character_post_attach_remaining -= interval
+	var now = OS.get_ticks_msec()
+	if now - _character_post_attach_last_sample_msec >= int(interval * 1000.0):
+		_character_post_attach_last_sample_msec = now
 		_sample_character_memory_peak()
-		if _character_post_attach_remaining <= 0.0:
-			_print_character_metrics()
-			return
+	_character_post_attach_remaining -= delta
+	if _character_post_attach_remaining <= 0.0:
+		_character_post_attach_remaining = 0.0
+		_print_character_metrics()
+		_update_process_state()
 
 
 func _print_character_metrics() -> void:
@@ -801,6 +877,9 @@ func _print_character_metrics() -> void:
 			" RAM static=", _character_memory_peak_static, "MB  dynamic=", _character_memory_peak_dynamic,
 			"MB  VRAM=", _character_memory_peak_vram, "MB  tex=", _character_memory_peak_tex,
 			"MB  vtx=", _character_memory_peak_vtx, "MB")
+	_push_debug_line(str(prefix, " ", current_character, " src=", source, " lod=", is_lod,
+			" RAM=", _character_memory_peak_static, "/", _character_memory_peak_dynamic,
+			" VRAM=", _character_memory_peak_vram, " tex=", _character_memory_peak_tex))
 
 
 func _cancel_character_loading() -> void:
@@ -960,6 +1039,29 @@ func _log_loader_error(err: int) -> void:
 		print("[Vita][Loader] error=", err, " stage=", stage, "/", total, " path=", _current_scene_path)
 	else:
 		print("[Loader] error=", err, " stage=", stage, "/", total, " path=", _current_scene_path)
+
+
+func _push_debug_line(text: String) -> void:
+	if not show_debug_overlay or _debug_label == null:
+		return
+	_debug_lines.append(text)
+	while _debug_lines.size() > DEBUG_MAX_LINES:
+		_debug_lines.remove(0)
+	_debug_label.text = "\n".join(_debug_lines)
+
+
+func _log_vita_memory(tag: String) -> void:
+	var static_mb = OS.get_static_memory_usage() / 1024.0 / 1024.0
+	var dynamic_mb = OS.get_dynamic_memory_usage() / 1024.0 / 1024.0
+	var vram_mb = Performance.get_monitor(Performance.RENDER_VIDEO_MEM_USED) / 1024.0 / 1024.0
+	var tex_mb = Performance.get_monitor(Performance.RENDER_TEXTURE_MEM_USED) / 1024.0 / 1024.0
+	var vtx_mb = Performance.get_monitor(Performance.RENDER_VERTEX_MEM_USED) / 1024.0 / 1024.0
+	print("[Vita][MenuChar]", tag,
+			" RAM static=", static_mb, "MB  dynamic=", dynamic_mb,
+			"MB  VRAM=", vram_mb, "MB  tex=", tex_mb, "MB  vtx=", vtx_mb, "MB")
+	_push_debug_line(str("[Vita][MenuChar] ", tag,
+			" RAM=", static_mb, "/", dynamic_mb,
+			" VRAM=", vram_mb, " tex=", tex_mb))
 
 
 func _find_anim_player_with_idle(node: Node) -> AnimationPlayer:

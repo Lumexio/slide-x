@@ -23,12 +23,12 @@ mesh = SubResource( 1 )
 material/0 = SubResource( 2 )
 
 [node name="BackWall" type="MeshInstance" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 1.00449 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0.905551 )
 mesh = SubResource( 3 )
 material/0 = SubResource( 5 )
 
 [node name="SideWallLeft" type="MeshInstance" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -1.30506, 1.5, 1 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -1.09696, 1.5, -0.0335778 )
 mesh = SubResource( 4 )
 material/0 = SubResource( 5 )
 
