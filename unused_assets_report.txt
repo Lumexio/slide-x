@@ -1242,8 +1242,6 @@ assets/models/buildings_models/cyberpunk_building/textures/material_5_metallicRo
 assets/models/buildings_models/cyberpunk_building/textures/material_baseColor.png
 assets/models/buildings_models/cyberpunk_building/textures/material_metallicRoughness.png
 assets/models/buildings_models/cyberpunk_building/textures/material_normal.png
-assets/models/meele-guy.glb
-assets/models/meele-guy_menu_lod.glb
 assets/sce_sys/icon0.png
 assets/sce_sys/livearea/contents/bg0.png
 assets/sce_sys/livearea/contents/startup.png
@@ -1502,7 +1500,6 @@ gui/RetroWindowsGUI/Windows_Slider_Handle.png
 gui/RetroWindowsGUI/Windows_Toggle_Active.png
 gui/RetroWindowsGUI/Windows_Toggle_Selected.png
 gui/Start.gd
-gui/player_meele_menu.tscn
 scenes/characters/Alpha_Body_MAT.material
 scenes/characters/Alpha_Joints_MAT.material
 scenes/characters/Beta_HighLimbsGeoSG3.material

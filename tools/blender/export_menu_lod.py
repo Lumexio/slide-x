@@ -1,6 +1,6 @@
 # Blender headless export for menu LOD.
 # Usage:
-# blender -b -P tools/blender/export_menu_lod.py -- --input "..." --output "..." --ratio 0.35 --weight-limit 2 --body-max 512 --joint-max 256
+# blender -b -P tools/blender/export_menu_lod.py -- --input "..." --output "..." --ratio 0.92 --weight-limit 8 --body-max 4096 --joint-max 2048
 
 import argparse
 import os
@@ -19,10 +19,10 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Export menu LOD GLB")
     parser.add_argument("--input", required=True, help="Path to source GLB")
     parser.add_argument("--output", required=True, help="Path to output GLB")
-    parser.add_argument("--ratio", type=float, default=0.35, help="Decimate ratio per mesh")
-    parser.add_argument("--weight-limit", type=int, default=2, help="Max bone influences per vertex")
-    parser.add_argument("--body-max", type=int, default=512, help="Max dimension for body textures")
-    parser.add_argument("--joint-max", type=int, default=256, help="Max dimension for joints textures")
+    parser.add_argument("--ratio", type=float, default=0.92, help="Decimate ratio per mesh")
+    parser.add_argument("--weight-limit", type=int, default=8, help="Max bone influences per vertex")
+    parser.add_argument("--body-max", type=int, default=4096, help="Max dimension for body textures")
+    parser.add_argument("--joint-max", type=int, default=2048, help="Max dimension for joints textures")
     return parser.parse_args(argv)
 
 

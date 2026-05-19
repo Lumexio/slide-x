@@ -107,7 +107,7 @@ func _setup_character_visuals() -> void:
 		animation_player = instance.find_node("AnimationPlayer", true, false)
 	if animation_player == null:
 		push_error("Player character is missing AnimationPlayer.")
-	var old_model = visuals.get_node_or_null("meele-guy")
+	var old_model = visuals.get_node_or_null("placeholder_model")
 	if old_model != null:
 		old_model.queue_free()
 

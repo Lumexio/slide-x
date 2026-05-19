@@ -1,5 +1,5 @@
 [gd_scene load_steps=2 format=2]
 
-[ext_resource path="res://scenes/characters/menu/kinetic-chad.tscn" type="PackedScene" id=1]
+[ext_resource path="res://assets/models/kinetic-chad_menu_lod.glb" type="PackedScene" id=1]
 
 [node name="FairyFire" instance=ExtResource( 1 )]

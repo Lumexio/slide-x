@@ -29,9 +29,10 @@ The third-person character controller is fully integrated and ready to use:
 ⚙️ **[Integration Status](docs/STATE_MACHINE_INTEGRATION.md)** - Scene structure and testing guide
 
 The documentation covers:
+
 - Complete architecture overview and component descriptions
 - How to tweak movement and camera behavior
-- Animation mapping to melee-guy model
+- Animation mapping to kinetic-chad model
 - Input configuration reference
 - Extending the system with new states
 - Troubleshooting common issues
@@ -39,17 +40,20 @@ The documentation covers:
 ### Controls
 
 **Movement:**
+
 - WASD: Move character (camera-relative)
 - Mouse: Rotate camera
 - Space: Jump
 - Shift: Run (original system)
 
 **Camera:**
+
 - Right Mouse Button: Toggle aim mode
 - Left Mouse Button: Fire/confirm (in aim mode)
 - Mouse Wheel: Zoom in/out
 
 **Combat** (original system):
+
 - I: Punch combos
 - O: Kick combos
 - P: Elbow attack

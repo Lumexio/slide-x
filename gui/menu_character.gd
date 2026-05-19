@@ -99,7 +99,7 @@ const CHARACTER_SCENES = {
 }
 const CHARACTER_LOD_SCENES = {
 	"AkimboBoy": "res://scenes/characters/menu_lod/AkimboBoy.tscn",
-	"KineticChad": "res://scenes/characters/menu/kinetic-chad.tscn",
+	"KineticChad": "res://scenes/characters/menu_lod/KineticChad.tscn",
 	"FairyFire": "res://scenes/characters/menu_lod/FairyFire.tscn",
 }
 const CHARACTER_PREVIEW_ROTATIONS = {
