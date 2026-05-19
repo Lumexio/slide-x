@@ -131,13 +131,14 @@ func _change_scene(scene_path: String, container: Node, current_scene: Node, lay
 		_debug_print_state(layer_name)
 		return current_scene
 
+	# Drop all caches and preloads BEFORE instancing so nothing holds extra VRAM refs.
+	if GameGlobal != null and GameGlobal.has_method("trim_preloaded_scene_cache"):
+		GameGlobal.trim_preloaded_scene_cache()
+	_free_all_detached_scenes()
+
 	# New scene is confirmed valid — now safely unload the old one.
 	if current_scene != null and is_instance_valid(current_scene):
 		_unload_current_scene(current_scene, container, layer_name, unload_mode)
-
-	# Aggressive memory cleanup: only keep current scene
-	if GameGlobal != null and GameGlobal.has_method("trim_preloaded_scene_cache"):
-		GameGlobal.trim_preloaded_scene_cache()
 
 	container.add_child(new_scene)
 	_debug_print_state(layer_name)
@@ -159,12 +160,13 @@ func _change_scene_from_packed(packed_scene: PackedScene, container: Node, curre
 		_debug_print_state(layer_name)
 		return current_scene
 
-	if current_scene != null and is_instance_valid(current_scene):
-		_unload_current_scene(current_scene, container, layer_name, unload_mode)
-
-	# Aggressive memory cleanup: only keep current scene
+	# Drop all caches and preloads BEFORE instancing so nothing holds extra VRAM refs.
 	if GameGlobal != null and GameGlobal.has_method("trim_preloaded_scene_cache"):
 		GameGlobal.trim_preloaded_scene_cache()
+	_free_all_detached_scenes()
+
+	if current_scene != null and is_instance_valid(current_scene):
+		_unload_current_scene(current_scene, container, layer_name, unload_mode)
 
 	container.add_child(new_scene)
 	_debug_print_state(layer_name)
@@ -198,6 +200,16 @@ func _unload_current_scene(current_scene: Node, container: Node, layer_name: Str
 		container.remove_child(current_scene)
 	current_scene.queue_free()
 	return
+
+
+func _free_all_detached_scenes() -> void:
+	for layer in ["world3d", "world2d", "ui"]:
+		var detached = _get_detached_scene(layer)
+		if detached != null and is_instance_valid(detached):
+			if detached.get_parent() != null:
+				detached.get_parent().remove_child(detached)
+			detached.free()
+		_clear_detached_scene(layer)
 
 
 func _clear_detached_if_same_scene(layer_name: String, scene_node: Node) -> void:

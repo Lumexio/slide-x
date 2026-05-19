@@ -118,7 +118,7 @@ func stop() -> void:
 	_character_finish_requested = false
 
 
-func _start_character_thread(character_name: String, scene_path: String) -> void:
+func _start_character_thread(_character_name: String, scene_path: String) -> void:
 	if _character_thread != null:
 		_character_thread_pending_scene_path = scene_path
 		return

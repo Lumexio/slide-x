@@ -54,15 +54,8 @@ func consume_pending_scene_path() -> String:
 
 
 func start_staged_preload() -> void:
-	if _preload_started:
-		return
-	_preload_started = true
-	_build_preload_stages()
-	_preload_total_items = _count_preload_items()
-	_preload_stage_index = 0
-	_preload_item_index = -1
-	_preload_active = true
-	_start_next_preload()
+	# Preloading disabled: only the current scene should exist in VRAM.
+	return
 
 
 func get_preloaded_scene(scene_path: String) -> PackedScene:
