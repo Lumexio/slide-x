@@ -9,6 +9,7 @@ enum UnloadMode {
 export(NodePath) var world3d_path: NodePath
 export(NodePath) var world2d_path: NodePath
 export(NodePath) var ui_path: NodePath
+export(bool) var free_vram_on_vita_scene_change := true
 
 var world3d_container: Node = null
 var world2d_container: Node = null
@@ -162,7 +163,14 @@ func _change_scene_from_packed(packed_scene: PackedScene, container: Node, curre
 	return new_scene
 
 func _unload_current_scene(current_scene: Node, container: Node, layer_name: String, unload_mode: int) -> void:
+	if free_vram_on_vita_scene_change and OS.get_name() == "Vita":
+		if unload_mode == UnloadMode.DETACH or unload_mode == UnloadMode.HIDE:
+			unload_mode = UnloadMode.DELETE
+
 	if unload_mode == UnloadMode.DELETE:
+		_clear_detached_if_same_scene(layer_name, current_scene)
+		if current_scene.get_parent() == container:
+			container.remove_child(current_scene)
 		current_scene.queue_free()
 		return
 
@@ -177,8 +185,19 @@ func _unload_current_scene(current_scene: Node, container: Node, layer_name: Str
 		return
 
 	push_error("Unknown unload mode: " + str(unload_mode) + ". Falling back to DELETE.")
+	_clear_detached_if_same_scene(layer_name, current_scene)
+	if current_scene.get_parent() == container:
+		container.remove_child(current_scene)
 	current_scene.queue_free()
 	return
+
+
+func _clear_detached_if_same_scene(layer_name: String, scene_node: Node) -> void:
+	var detached_scene = _get_detached_scene(layer_name)
+	if detached_scene == null:
+		return
+	if detached_scene == scene_node:
+		_clear_detached_scene(layer_name)
 
 func _set_scene_visibility(scene_node: Node, is_visible: bool) -> void:
 	if scene_node is Spatial:

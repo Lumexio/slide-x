@@ -27,6 +27,7 @@ config/icon="res://icon.png"
 [autoload]
 
 GameGlobal="*res://autoload/game_global.gd"
+MenuCharacterCache="*res://autoload/menu_character_cache.gd"
 
 [editor_plugins]
 

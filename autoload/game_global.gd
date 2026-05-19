@@ -72,6 +72,21 @@ func get_preloaded_scene(scene_path: String) -> PackedScene:
 	return null
 
 
+func trim_preloaded_scene_cache() -> void:
+	# One-shot trim for heavy transitions: stop ongoing preload and drop strong refs.
+	_preload_loader = null
+	_preload_active = false
+	_preload_started = false
+	_preload_stage_index = 0
+	_preload_item_index = -1
+	_preload_current_path = ""
+	_preload_stage_name = ""
+	_preload_stages.clear()
+	_preload_total_items = 0
+	set_process(false)
+	preload_cache.clear()
+
+
 func _build_preload_stages() -> void:
 	var menu_paths = ["res://gui/menu_character.tscn"]
 	var character_paths = [
@@ -318,5 +333,5 @@ func _ready() -> void:
 	t.autostart = true
 	t.one_shot = false
 	add_child(t)
-	t.connect("timeout", self, "_print_memory")
+	var _timer_connect_err = t.connect("timeout", self, "_print_memory")
 	_maybe_apply_vita_perf()

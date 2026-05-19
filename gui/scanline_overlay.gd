@@ -5,7 +5,7 @@ export(int) var line_height := 1
 export(int) var gap_height := 1
 
 func _ready() -> void:
-	var total_height: int = max(1, line_height + gap_height)
+	var total_height: int = int(max(1, line_height + gap_height))
 	var img := Image.new()
 	img.create(2, total_height, false, Image.FORMAT_RGBA8)
 	img.lock()

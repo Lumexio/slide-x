@@ -1,4 +1,4 @@
-extends Spatial
+﻿extends Spatial
 
 
 onready var _menu_buttons: Array = [
@@ -136,9 +136,14 @@ const DEBUG_MAX_LINES := 8
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	_level_thread_mutex = Mutex.new()
-	_character_thread_mutex = Mutex.new()
 	if _debug_label != null:
 		_debug_label.visible = show_debug_overlay
+	if MenuCharacterCache != null:
+		MenuCharacterCache.character_cache_limit = 1
+		MenuCharacterCache.use_threaded_character_load = use_threaded_character_load
+		MenuCharacterCache.set_menu_lod(use_menu_lod)
+		var _err_loaded = MenuCharacterCache.connect("character_loaded", self, "_on_character_cache_loaded")
+		var _err_failed = MenuCharacterCache.connect("character_load_failed", self, "_on_character_cache_failed")
 	_select_character("AkimboBoy", false)
 	_focus_index = _find_initial_focus_index()
 	_apply_focus()
@@ -148,7 +153,8 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	_stop_level_thread()
-	_stop_character_thread()
+	if MenuCharacterCache != null:
+		MenuCharacterCache.stop()
 
 
 func _select_character(character_name: String, animate: bool = true) -> void:
@@ -217,10 +223,8 @@ func _process(delta: float) -> void:
 		_poll_scene_loader()
 	elif _pending_packed != null:
 		_poll_packed_loading()
-	elif _character_loader != null:
-		_poll_character_loader()
-	elif _character_thread != null:
-		_poll_character_thread()
+	elif MenuCharacterCache != null and MenuCharacterCache.is_loading():
+		MenuCharacterCache.poll()
 	elif _level_preload_loader != null:
 		_poll_level_preload()
 	elif _level_thread != null:
@@ -366,20 +370,22 @@ func _start_character_loading(character_name: String) -> void:
 	_sample_character_memory_peak()
 	_show_character_loading_ui()
 	_log_vita_memory("character_load_begin " + character_name)
-	var scene_path = _resolve_character_scene_path(character_name)
+	var scene_path = ""
+	if MenuCharacterCache != null:
+		scene_path = MenuCharacterCache.resolve_character_scene_path(character_name)
 	if scene_path == "":
 		push_error("Unknown character scene: " + str(character_name))
 		_request_character_loading_hide()
 		return
 	_character_scene_path = scene_path
-	var cached := _get_cached_character_scene(scene_path)
+	var cached: PackedScene = null
+	if MenuCharacterCache != null:
+		cached = MenuCharacterCache.get_cached_character_scene(scene_path)
 	if cached == null and GameGlobal != null and GameGlobal.has_method("get_preloaded_scene"):
 		cached = GameGlobal.get_preloaded_scene(scene_path)
-		if cached != null:
-			_cache_character_scene(scene_path, cached)
+		if cached != null and MenuCharacterCache != null:
+			MenuCharacterCache.cache_character_scene(scene_path, cached)
 	if cached != null:
-		_character_loader = null
-		_character_finish_requested = false
 		var cached_instance := cached.instance()
 		if cached_instance == null:
 			push_error("Failed to instance cached character scene.")
@@ -397,19 +403,37 @@ func _start_character_loading(character_name: String) -> void:
 		_start_menu_env_load()
 		_update_process_state()
 		return
-	if use_threaded_character_load:
-		_start_character_thread(character_name, scene_path)
-		return
-	if _character_loader != null:
-		_character_loader = null
-		_character_finish_requested = false
-	var loader = ResourceLoader.load_interactive(scene_path)
-	if loader == null:
-		push_error("Failed to start character load: " + str(scene_path))
+	if MenuCharacterCache != null:
+		MenuCharacterCache.start_load(character_name, scene_path)
+	_update_process_state()
+
+
+func _on_character_cache_loaded(packed: PackedScene) -> void:
+	if packed == null or not (packed is PackedScene):
+		push_error("Character resource is not a PackedScene.")
 		_request_character_loading_hide()
 		return
-	_character_loader = loader
-	_character_finish_requested = false
+	if MenuCharacterCache != null:
+		MenuCharacterCache.cache_character_scene(_character_scene_path, packed)
+	var instance = packed.instance()
+	if instance == null:
+		push_error("Failed to instance character scene.")
+		_request_character_loading_hide()
+		return
+	_instance_character(instance)
+	_character_load_elapsed_msec = OS.get_ticks_msec() - _character_load_start_msec
+	_sample_character_memory_peak()
+	_log_vita_memory("character_load_done " + current_character)
+	_request_character_loading_hide()
+	_start_character_post_attach_sampling()
+	_start_level_preload()
+	_start_menu_env_load()
+
+
+func _on_character_cache_failed(error_message: String) -> void:
+	push_error("Character load failed: " + error_message)
+	if MenuCharacterCache != null:
+		MenuCharacterCache.start_interactive_load(_character_scene_path)
 	_update_process_state()
 
 
@@ -896,8 +920,8 @@ func _print_character_metrics() -> void:
 
 func _cancel_character_loading() -> void:
 	_invalidate_character_post_attach_sampling()
-	_character_loader = null
-	_character_finish_requested = false
+	if MenuCharacterCache != null:
+		MenuCharacterCache.stop()
 	_set_character_loading_ui(false)
 	_character_loading_pending_hide = false
 	_update_process_state()
