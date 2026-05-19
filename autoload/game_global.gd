@@ -85,6 +85,8 @@ func trim_preloaded_scene_cache() -> void:
 	_preload_total_items = 0
 	set_process(false)
 	preload_cache.clear()
+	if MenuCharacterCache != null:
+		MenuCharacterCache.stop()
 
 
 func _build_preload_stages() -> void:

@@ -139,7 +139,7 @@ func _ready() -> void:
 	if _debug_label != null:
 		_debug_label.visible = show_debug_overlay
 	if MenuCharacterCache != null:
-		MenuCharacterCache.character_cache_limit = 1
+		MenuCharacterCache.character_cache_limit = 0
 		MenuCharacterCache.use_threaded_character_load = use_threaded_character_load
 		MenuCharacterCache.set_menu_lod(use_menu_lod)
 		var _err_loaded = MenuCharacterCache.connect("character_loaded", self, "_on_character_cache_loaded")
