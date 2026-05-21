@@ -32,6 +32,7 @@ MenuCharacterCache="*res://autoload/menu_character_cache.gd"
 [debug]
 
 settings/stdout/print_fps=true
+gdscript/warnings/unused_class_variable=true
 
 [editor_plugins]
 
@@ -151,9 +152,17 @@ common/enable_pause_aware_picking=true
 
 quality/driver/driver_name="GLES2"
 quality/driver/fallback_to_gles2=true
+quality/intended_usage/framebuffer_allocation.mobile=2
 vram_compression/import_etc=true
 vram_compression/import_pvrtc=true
-quality/shadow_atlas/size=256
+quality/directional_shadow/size=2048
+quality/shadow_atlas/size=2048
+quality/reflections/texture_array_reflections.mobile=true
+quality/reflections/high_quality_ggx=false
+quality/reflections/high_quality_ggx.mobile=true
 quality/filters/anisotropic_filter_level=0
+quality/filters/use_nearest_mipmap_filter=true
+quality/lightmapping/use_bicubic_sampling.mobile=true
 quality/depth/hdr=false
+quality/depth/hdr.mobile=true
 environment/default_environment="res://default_env.tres"
