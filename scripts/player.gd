@@ -232,6 +232,12 @@ func get_input_direction() -> Vector3:
 	var input = Vector3.ZERO
 	input.x = Input.get_action_strength("ui_right") - Input.get_action_strength("ui_left")
 	input.z = Input.get_action_strength("ui_down") - Input.get_action_strength("ui_up")
+	var joy_id = _get_primary_joypad()
+	if joy_id >= 0:
+		var joy_x = _apply_deadzone(Input.get_joy_axis(joy_id, left_stick_x_axis), stick_deadzone)
+		var joy_z = _apply_deadzone(Input.get_joy_axis(joy_id, left_stick_y_axis), stick_deadzone)
+		input.x = joy_x if abs(joy_x) > abs(input.x) else input.x
+		input.z = joy_z if abs(joy_z) > abs(input.z) else input.z
 	if input.length() > 1.0:
 		input = input.normalized()
 	return (transform.basis.x * input.x + transform.basis.z * input.z)

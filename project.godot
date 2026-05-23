@@ -146,23 +146,33 @@ elbow_mod={
 [physics]
 
 common/enable_pause_aware_picking=true
+2d/physics_engine="GodotPhysics"
 3d/physics_engine="GodotPhysics"
+2d/thread_model=2
 
 [rendering]
 
 quality/driver/driver_name="GLES2"
 quality/driver/fallback_to_gles2=true
 quality/intended_usage/framebuffer_allocation.mobile=2
+threads/thread_model=2
+threads/thread_safe_bvh=true
 vram_compression/import_etc=true
 vram_compression/import_pvrtc=true
 quality/directional_shadow/size=2048
 quality/shadow_atlas/size=2048
+quality/shadows/filter_mode.mobile=1
+quality/reflections/texture_array_reflections=false
 quality/reflections/texture_array_reflections.mobile=true
 quality/reflections/high_quality_ggx=false
 quality/reflections/high_quality_ggx.mobile=true
-quality/filters/anisotropic_filter_level=0
+quality/reflections/irradiance_max_size=86
+quality/filters/anisotropic_filter_level=1
 quality/filters/use_nearest_mipmap_filter=true
+quality/lightmapping/use_bicubic_sampling=false
 quality/lightmapping/use_bicubic_sampling.mobile=true
+quality/reflections/atlas_size=1024
+quality/reflections/atlas_subdiv=4
 quality/depth/hdr=false
 quality/depth/hdr.mobile=true
 environment/default_environment="res://default_env.tres"
