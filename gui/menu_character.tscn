@@ -375,18 +375,6 @@ icon_align = 1
 
 [node name="CharacterAnchor" type="Spatial" parent="."]
 
-[node name="DebugOverlay" type="CanvasLayer" parent="."]
-
-[node name="DebugLabel" type="Label" parent="DebugOverlay"]
-visible = false
-margin_left = 8.0
-margin_top = 8.0
-margin_right = 460.0
-margin_bottom = 160.0
-custom_colors/font_color = Color( 0.941176, 0.941176, 0.941176, 1 )
-custom_fonts/font = SubResource( 37 )
-autowrap = true
-
 [connection signal="pressed" from="TaskBar/FairyFire" to="." method="_on_FairyFire_pressed"]
 [connection signal="pressed" from="TaskBar/AkimboBoy" to="." method="_on_AkimboBoy_pressed"]
 [connection signal="pressed" from="TaskBar/Kinetic Chad" to="." method="_on_Kinetic_Chad_pressed"]

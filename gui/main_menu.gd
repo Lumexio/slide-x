@@ -8,13 +8,11 @@ onready var _menu_buttons: Array = [
 
 onready var _loading_bar: ProgressBar = $"WindowStartGame/LoadingBar"
 onready var _loading_label: Label = $"WindowStartGame/LoadingLabel"
-onready var _debug_label: Label = get_node_or_null("DebugOverlay/DebugLabel") as Label
 
 const NEXT_SCENE_PATH = "res://gui/menu_character.tscn"
 const LOADING_SCENE_PATH = "res://gui/loading_screen.tscn"
 const LOADING_MIN_SHOW_MSEC := 200
 const THREAD_PULSE_PERIOD_MSEC := 900.0
-const DEBUG_MAX_LINES := 8
 
 var _focus_index := 0
 var _loader: ResourceInteractiveLoader = null
@@ -34,10 +32,8 @@ var _preload_thread_error := ""
 var _preload_thread_packed: PackedScene = null
 var _waiting_for_preload := false
 var _thread_pulse_start_msec := 0
-var _debug_lines: Array = []
 
 export(bool) var use_threaded_menu_load := true
-export(bool) var show_debug_overlay := true
 
 
 # Called when the node enters the scene tree for the first time.
@@ -47,8 +43,6 @@ func _ready() -> void:
 	_focus_index = 0
 	_apply_focus()
 	_start_preload()
-	if _debug_label != null:
-		_debug_label.visible = show_debug_overlay
 	if GameGlobal != null and GameGlobal.has_method("start_staged_preload"):
 		GameGlobal.start_staged_preload()
 
@@ -160,7 +154,6 @@ func _begin_loading(scene_path: String) -> void:
 	_loading_show_start_msec = OS.get_ticks_msec()
 	_loading_finish_ready_msec = _loading_show_start_msec + LOADING_MIN_SHOW_MSEC
 	_finish_requested = false
-	_log_vita_memory("menu_to_character_begin")
 	_set_loading_ui(true)
 	_update_loading_bar()
 	_update_process_state()
@@ -174,7 +167,7 @@ func _begin_loading_from_packed(packed: PackedScene) -> void:
 	_is_loading = true
 	_loading_show_start_msec = OS.get_ticks_msec()
 	_loading_finish_ready_msec = _loading_show_start_msec + LOADING_MIN_SHOW_MSEC
-	_log_vita_memory("menu_to_character_preloaded")
+
 	_set_loading_ui(true)
 	if _loading_bar != null:
 		_loading_bar.value = 100.0
@@ -189,7 +182,7 @@ func _begin_loading_for_scene_path(scene_path: String) -> void:
 	_is_loading = true
 	_loading_show_start_msec = OS.get_ticks_msec()
 	_loading_finish_ready_msec = _loading_show_start_msec + LOADING_MIN_SHOW_MSEC
-	_log_vita_memory("menu_to_character_detached")
+
 	_set_loading_ui(true)
 	if _loading_bar != null:
 		_loading_bar.value = 100.0
@@ -205,7 +198,7 @@ func _begin_loading_wait_for_preload() -> void:
 	_loading_show_start_msec = OS.get_ticks_msec()
 	_loading_finish_ready_msec = _loading_show_start_msec + LOADING_MIN_SHOW_MSEC
 	_thread_pulse_start_msec = _loading_show_start_msec
-	_log_vita_memory("menu_to_character_wait_thread")
+
 	_set_loading_ui(true)
 	_update_loading_bar()
 	_update_process_state()
@@ -335,7 +328,7 @@ func _finish_loading() -> void:
 		push_error("Loaded resource is not a PackedScene.")
 		_set_loading_ui(false)
 		return
-	_log_vita_memory("menu_to_character_finish")
+
 	var controller = GameGlobal.get_game_controller()
 	if controller != null and controller.has_method("change_world3d_scene_from_packed"):
 		controller.change_world3d_scene_from_packed(packed)
@@ -353,7 +346,7 @@ func _finish_loading_from_packed(packed: PackedScene) -> void:
 		_set_loading_ui(false)
 		_update_process_state()
 		return
-	_log_vita_memory("menu_to_character_finish_preloaded")
+
 	var controller = GameGlobal.get_game_controller()
 	if controller != null and controller.has_method("change_world3d_scene_from_packed"):
 		controller.change_world3d_scene_from_packed(packed)
@@ -366,7 +359,7 @@ func _finish_loading_from_scene_path(scene_path: String) -> void:
 	_pending_scene_path = ""
 	_is_loading = false
 	_finish_requested = false
-	_log_vita_memory("menu_to_character_finish_detached")
+
 	var controller = GameGlobal.get_game_controller()
 	if controller != null and controller.has_method("change_world3d_scene"):
 		controller.change_world3d_scene(scene_path)
@@ -414,29 +407,7 @@ func _log_loader_error(err: int) -> void:
 		print("[Loader] error=", err, " stage=", stage, "/", total, " path=", NEXT_SCENE_PATH)
 
 
-func _push_debug_line(text: String) -> void:
-	if not show_debug_overlay or _debug_label == null:
-		return
-	_debug_lines.append(text)
-	while _debug_lines.size() > DEBUG_MAX_LINES:
-		_debug_lines.remove(0)
-	_debug_label.text = "\n".join(_debug_lines)
 
-
-func _log_vita_memory(tag: String) -> void:
-	if OS.get_name() != "Vita":
-		return
-	var static_mb = OS.get_static_memory_usage() / 1024.0 / 1024.0
-	var dynamic_mb = OS.get_dynamic_memory_usage() / 1024.0 / 1024.0
-	var vram_mb = Performance.get_monitor(Performance.RENDER_VIDEO_MEM_USED) / 1024.0 / 1024.0
-	var tex_mb = Performance.get_monitor(Performance.RENDER_TEXTURE_MEM_USED) / 1024.0 / 1024.0
-	var vtx_mb = Performance.get_monitor(Performance.RENDER_VERTEX_MEM_USED) / 1024.0 / 1024.0
-	print("[Vita][MainMenu]", tag,
-			" RAM static=", static_mb, "MB  dynamic=", dynamic_mb,
-			"MB  VRAM=", vram_mb, "MB  tex=", tex_mb, "MB  vtx=", vtx_mb, "MB")
-	_push_debug_line(str("[Vita][MainMenu] ", tag,
-			" RAM=", static_mb, "/", dynamic_mb,
-			" VRAM=", vram_mb, " tex=", tex_mb))
 
 
 

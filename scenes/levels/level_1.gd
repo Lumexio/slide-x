@@ -5,13 +5,9 @@ const ENV_SCENE_PATH = "res://scenes/levels/level_1_env.tscn"
 
 onready var _env_anchor: Spatial = $"EnvAnchor"
 onready var _env_loading_label: Label = $"CanvasLayer/EnvLoadingLabel"
-onready var _debug_label: Label = get_node_or_null("CanvasLayer/DebugLabel") as Label
 var _env_loader: ResourceInteractiveLoader = null
-var _debug_lines: Array = []
 export(float) var memory_sample_interval := 0.3
 export(float) var memory_post_attach_window := 2.0
-export(bool) var show_debug_overlay := true
-const DEBUG_MAX_LINES := 8
 var _memory_sample_accum := 0.0
 var _memory_peak_static := 0.0
 var _memory_peak_dynamic := 0.0
@@ -27,8 +23,6 @@ func _ready() -> void:
 	set_process(false)
 	_set_env_loading_visible(false)
 	_setup_post_attach_timer()
-	if _debug_label != null:
-		_debug_label.visible = show_debug_overlay
 	call_deferred("_start_env_load")
 
 
@@ -72,7 +66,6 @@ func _start_env_load() -> void:
 			_start_post_attach_sampling()
 			set_process(false)
 			return
-	_push_debug_line("env_load_begin")
 	_env_loader = ResourceLoader.load_interactive(ENV_SCENE_PATH)
 	if _env_loader == null:
 		push_error("Failed to start env loading: " + str(ENV_SCENE_PATH))
@@ -95,7 +88,6 @@ func _instance_env(packed: PackedScene) -> void:
 		_env_anchor.add_child(instance)
 	else:
 		add_child(instance)
-	_push_debug_line("env_load_done")
 
 
 func _set_env_loading_visible(visible: bool) -> void:
@@ -142,17 +134,6 @@ func _print_memory_peak() -> void:
 			" RAM static=", _memory_peak_static, "MB  dynamic=", _memory_peak_dynamic,
 			"MB  VRAM=", _memory_peak_vram, "MB  tex=", _memory_peak_tex, "MB  vtx=",
 			_memory_peak_vtx, "MB")
-	_push_debug_line(str("ENV peak RAM=", _memory_peak_static, "/", _memory_peak_dynamic,
-			" VRAM=", _memory_peak_vram, " tex=", _memory_peak_tex))
-
-
-func _push_debug_line(text: String) -> void:
-	if not show_debug_overlay or _debug_label == null:
-		return
-	_debug_lines.append(text)
-	while _debug_lines.size() > DEBUG_MAX_LINES:
-		_debug_lines.remove(0)
-	_debug_label.text = "\n".join(_debug_lines)
 
 
 func _setup_post_attach_timer() -> void:

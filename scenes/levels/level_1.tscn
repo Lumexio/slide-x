@@ -60,12 +60,4 @@ margin_right = 210.0
 margin_bottom = -8.0
 text = "Loading area..."
 
-[node name="DebugLabel" type="Label" parent="CanvasLayer"]
-visible = false
-margin_left = 8.0
-margin_top = 8.0
-margin_right = 460.0
-margin_bottom = 140.0
-autowrap = true
-
 [node name="PauseMenu" parent="CanvasLayer" instance=ExtResource( 2 )]

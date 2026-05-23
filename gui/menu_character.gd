@@ -15,7 +15,6 @@ onready var _back_loading_label: Label = $"TaskBar/BackLoadingLabel"
 onready var _character_loading_label: Label = $"TaskBar/CharacterLoadingLabel"
 onready var _character_anchor: Spatial = $"CharacterAnchor"
 onready var _character_light: Light = $"SpotLight"
-onready var _debug_label: Label = get_node_or_null("DebugOverlay/DebugLabel") as Label
 onready var _menu_env_anchor: Spatial = $"EnvAnchor"
 onready var _menu_env_loading_label: Label = get_node_or_null("EnvCanvas/EnvLoadingLabel") as Label
 
@@ -58,7 +57,6 @@ var _level_thread_done := false
 var _level_thread_error := ""
 var _level_thread_packed: PackedScene = null
 var _waiting_for_level_preload := false
-var _debug_lines: Array = []
 var _menu_env_loader: ResourceInteractiveLoader = null
 var _menu_env_loaded := false
 
@@ -69,7 +67,6 @@ export(bool) var menu_character_optimize := true
 export(bool) var menu_character_hide_joints := true
 export(bool) var menu_character_disable_shadows := true
 export(bool) var use_threaded_level_load := true
-export(bool) var show_debug_overlay := true
 
 const CHARACTER_PREVIEW_ROTATIONS = {
 	"AkimboBoy": Vector3(0, 180, 0),
@@ -95,14 +92,11 @@ const MAIN_MENU_SCENE_PATH = "res://gui/main_menu.tscn"
 const LOADING_SCENE_PATH = "res://gui/loading_screen.tscn"
 const LOADING_MIN_SHOW_MSEC := 200
 const CHARACTER_LOADING_MIN_SHOW_MSEC := 200
-const DEBUG_MAX_LINES := 8
 
 
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	_level_thread_mutex = Mutex.new()
-	if _debug_label != null:
-		_debug_label.visible = show_debug_overlay
 	if MenuCharacterCache != null:
 		MenuCharacterCache.character_cache_limit = 0
 		MenuCharacterCache.use_threaded_character_load = true
@@ -114,7 +108,6 @@ func _ready() -> void:
 	_update_process_state()
 	yield(get_tree(), "idle_frame")
 	_select_character("AkimboBoy")
-	_log_vita_memory("menu_character_ready")
 
 
 func _exit_tree() -> void:
@@ -242,7 +235,6 @@ func _start_menu_env_load() -> void:
 			_instance_menu_env(cached)
 			_menu_env_loaded = true
 			_set_menu_env_loading_visible(false)
-			_push_debug_line("menu_env_cached")
 			return
 	var loader = ResourceLoader.load_interactive(MENU_ENV_SCENE_PATH)
 	if loader == null:
@@ -251,7 +243,6 @@ func _start_menu_env_load() -> void:
 		return
 	_menu_env_loader = loader
 	_set_menu_env_loading_visible(true)
-	_push_debug_line("menu_env_begin")
 	_update_process_state()
 
 
@@ -265,7 +256,6 @@ func _poll_menu_env_loader() -> void:
 		_instance_menu_env(packed)
 		_set_menu_env_loading_visible(false)
 		_menu_env_loaded = true
-		_push_debug_line("menu_env_done")
 		_update_process_state()
 		return
 	push_error("Menu environment load failed with error code: " + str(err))
@@ -644,9 +634,6 @@ func _print_character_metrics() -> void:
 			" RAM static=", _character_memory_peak_static, "MB  dynamic=", _character_memory_peak_dynamic,
 			"MB  VRAM=", _character_memory_peak_vram, "MB  tex=", _character_memory_peak_tex,
 			"MB  vtx=", _character_memory_peak_vtx, "MB")
-	_push_debug_line(str(prefix, " ", current_character, " src=", source,
-			" RAM=", _character_memory_peak_static, "/", _character_memory_peak_dynamic,
-			" VRAM=", _character_memory_peak_vram, " tex=", _character_memory_peak_tex))
 
 
 func _cancel_character_loading() -> void:
@@ -805,15 +792,6 @@ func _log_loader_error(err: int) -> void:
 		print("[Loader] error=", err, " stage=", stage, "/", total, " path=", _current_scene_path)
 
 
-func _push_debug_line(text: String) -> void:
-	if not show_debug_overlay or _debug_label == null:
-		return
-	_debug_lines.append(text)
-	while _debug_lines.size() > DEBUG_MAX_LINES:
-		_debug_lines.remove(0)
-	_debug_label.text = "\n".join(_debug_lines)
-
-
 func _log_vita_memory(tag: String) -> void:
 	var static_mb = OS.get_static_memory_usage() / 1024.0 / 1024.0
 	var dynamic_mb = OS.get_dynamic_memory_usage() / 1024.0 / 1024.0
@@ -823,9 +801,6 @@ func _log_vita_memory(tag: String) -> void:
 	print("[Vita][MenuChar]", tag,
 			" RAM static=", static_mb, "MB  dynamic=", dynamic_mb,
 			"MB  VRAM=", vram_mb, "MB  tex=", tex_mb, "MB  vtx=", vtx_mb, "MB")
-	_push_debug_line(str("[Vita][MenuChar] ", tag,
-			" RAM=", static_mb, "/", dynamic_mb,
-			" VRAM=", vram_mb, " tex=", tex_mb))
 
 
 func _find_anim_player_with_idle(node: Node) -> AnimationPlayer:
