@@ -27,21 +27,13 @@ var _finish_requested := false
 var _active_loading_bar: ProgressBar = null
 var _active_loading_label: Label = null
 var _current_scene_path := ""
-var _character_loader: ResourceInteractiveLoader = null
-var _character_finish_requested := false
 var _character_scene_path := ""
 var _character_instance: Spatial = null
 var _character_anim_player: AnimationPlayer = null
 var _available_anim_names: Array = []
 var _anim_index := 0
-var _character_transition_tween: Tween = null
-var _transition_old_instance: Spatial = null
-var _pending_character_direction := 0
-var _pending_character_animate := true
 var _level_preload_loader: ResourceInteractiveLoader = null
 var _level_preload_packed: PackedScene = null
-var _character_cache := {}
-var _character_cache_order: Array = []
 var _character_load_start_msec := 0
 var _character_load_elapsed_msec := 0
 var _character_last_sample_msec := 0
@@ -66,42 +58,19 @@ var _level_thread_done := false
 var _level_thread_error := ""
 var _level_thread_packed: PackedScene = null
 var _waiting_for_level_preload := false
-var _character_thread: Thread = null
-var _character_thread_mutex: Mutex = null
-var _character_thread_done := false
-var _character_thread_error := ""
-var _character_thread_packed: PackedScene = null
-var _character_thread_token := 0
-var _character_thread_result_token := -1
-var _character_thread_scene_path := ""
-var _character_thread_pending_scene_path := ""
-var _character_thread_pending_character := ""
 var _debug_lines: Array = []
 var _menu_env_loader: ResourceInteractiveLoader = null
 var _menu_env_loaded := false
 
 export(bool) var use_menu_lod := true
-export(int) var character_cache_limit := 1
 export(float) var character_memory_sample_interval := 0.2
 export(float) var character_memory_post_attach_window := 1.0
 export(bool) var menu_character_optimize := true
 export(bool) var menu_character_hide_joints := true
 export(bool) var menu_character_disable_shadows := true
 export(bool) var use_threaded_level_load := true
-export(bool) var use_threaded_character_load := true
 export(bool) var show_debug_overlay := true
 
-const CHARACTER_ORDER = ["AkimboBoy", "KineticChad", "FairyFire"]
-const CHARACTER_SCENES = {
-	"AkimboBoy": "res://scenes/characters/menu/AkimboBoy.tscn",
-	"KineticChad": "res://scenes/characters/menu/kinetic-chad.tscn",
-	"FairyFire": "res://scenes/characters/menu/FairyFire.tscn",
-}
-const CHARACTER_LOD_SCENES = {
-	"AkimboBoy": "res://scenes/characters/menu_lod/AkimboBoy.tscn",
-	"KineticChad": "res://scenes/characters/menu_lod/KineticChad.tscn",
-	"FairyFire": "res://scenes/characters/menu_lod/FairyFire.tscn",
-}
 const CHARACTER_PREVIEW_ROTATIONS = {
 	"AkimboBoy": Vector3(0, 180, 0),
 	"KineticChad": Vector3(0, 180, 0),
@@ -120,10 +89,6 @@ const PREVIEW_ANIMATIONS = [
 	"jumping",
 	"jump-back",
 ]
-const CHARACTER_SLIDE_DISTANCE = 2.4
-const CHARACTER_SLIDE_TIME = 0.25
-const CHARACTER_VISIBILITY_RANGE_BEGIN = 0.0
-const CHARACTER_VISIBILITY_RANGE_END = 12.0
 const LEVEL_SCENE_PATH = "res://scenes/levels/level_1.tscn"
 const MENU_ENV_SCENE_PATH = "res://scenes/levels/menu_env.tscn"
 const MAIN_MENU_SCENE_PATH = "res://gui/main_menu.tscn"
@@ -140,18 +105,15 @@ func _ready() -> void:
 		_debug_label.visible = show_debug_overlay
 	if MenuCharacterCache != null:
 		MenuCharacterCache.character_cache_limit = 0
-		MenuCharacterCache.use_threaded_character_load = use_threaded_character_load
+		MenuCharacterCache.use_threaded_character_load = true
 		MenuCharacterCache.set_menu_lod(use_menu_lod)
 		var _err_loaded = MenuCharacterCache.connect("character_loaded", self, "_on_character_cache_loaded")
 		var _err_failed = MenuCharacterCache.connect("character_load_failed", self, "_on_character_cache_failed")
 	_focus_index = _find_initial_focus_index()
 	_apply_focus()
 	_update_process_state()
-	# Defer character loading to the next frame so the scene-tree entry cost
-	# of menu_character.tscn itself settles before we start attaching more
-	# 3D nodes (character model + environment).
 	yield(get_tree(), "idle_frame")
-	_select_character("AkimboBoy", false)
+	_select_character("AkimboBoy")
 	_log_vita_memory("menu_character_ready")
 
 
@@ -161,16 +123,7 @@ func _exit_tree() -> void:
 		MenuCharacterCache.stop()
 
 
-func _select_character(character_name: String, animate: bool = true) -> void:
-	var old_index = CHARACTER_ORDER.find(current_character)
-	var new_index = CHARACTER_ORDER.find(character_name)
-	_pending_character_direction = 0
-	if old_index != -1 and new_index != -1:
-		if new_index > old_index:
-			_pending_character_direction = 1
-		elif new_index < old_index:
-			_pending_character_direction = -1
-	_pending_character_animate = animate
+func _select_character(character_name: String) -> void:
 	current_character = character_name
 	_apply_character_light(character_name)
 	_start_character_loading(character_name)
@@ -262,8 +215,6 @@ func _cycle_focus(step: int) -> void:
 
 
 func _begin_loading(scene_path: String, loading_bar: ProgressBar, loading_label: Label) -> void:
-	if _character_loader != null:
-		_cancel_character_loading()
 	var loader = ResourceLoader.load_interactive(scene_path)
 	if loader == null:
 		push_error("Failed to start loading scene: " + str(scene_path))
@@ -343,7 +294,7 @@ func _set_menu_env_loading_visible(visible: bool) -> void:
 
 
 func _update_process_state() -> void:
-	set_process(_loader != null or _pending_packed != null or _character_loader != null or _character_thread != null or _level_preload_loader != null or _level_thread != null or _character_loading_pending_hide or _character_post_attach_remaining > 0.0 or _menu_env_loader != null)
+	set_process(_loader != null or _pending_packed != null or (MenuCharacterCache != null and MenuCharacterCache.is_loading()) or _level_preload_loader != null or _level_thread != null or _character_loading_pending_hide or _character_post_attach_remaining > 0.0 or _menu_env_loader != null)
 
 
 func _poll_scene_loader() -> void:
@@ -439,178 +390,6 @@ func _on_character_cache_failed(error_message: String) -> void:
 	if MenuCharacterCache != null:
 		MenuCharacterCache.start_interactive_load(_character_scene_path)
 	_update_process_state()
-
-
-func _start_character_thread(character_name: String, scene_path: String) -> void:
-	if _character_thread != null:
-		_character_thread_pending_scene_path = scene_path
-		_character_thread_pending_character = character_name
-		return
-	if _character_thread_mutex == null:
-		_character_thread_mutex = Mutex.new()
-	_character_thread_token += 1
-	_character_thread_scene_path = scene_path
-	_character_thread_done = false
-	_character_thread_error = ""
-	_character_thread_packed = null
-	_character_thread_result_token = -1
-	_character_thread = Thread.new()
-	var err = _character_thread.start(self, "_thread_load_character", {"scene_path": scene_path, "token": _character_thread_token})
-	if err != OK:
-		push_error("Failed to start character thread: " + str(err))
-		_character_thread = null
-		_start_character_interactive(scene_path)
-		return
-	_update_process_state()
-
-
-func _thread_load_character(userdata) -> void:
-	var scene_path = ""
-	var token = 0
-	if typeof(userdata) == TYPE_DICTIONARY:
-		scene_path = str(userdata.get("scene_path", ""))
-		token = int(userdata.get("token", 0))
-	var loaded = null
-	if scene_path != "":
-		loaded = load(scene_path)
-	var packed: PackedScene = null
-	var err = ""
-	if loaded == null or not (loaded is PackedScene):
-		err = "Character preload is not a PackedScene: " + str(scene_path)
-	else:
-		packed = loaded
-	_character_thread_mutex.lock()
-	_character_thread_packed = packed
-	_character_thread_error = err
-	_character_thread_done = true
-	_character_thread_result_token = token
-	_character_thread_mutex.unlock()
-
-
-func _poll_character_thread() -> void:
-	if _character_thread == null:
-		return
-	var done = false
-	var err = ""
-	var packed: PackedScene = null
-	var result_token = -1
-	_character_thread_mutex.lock()
-	done = _character_thread_done
-	err = _character_thread_error
-	packed = _character_thread_packed
-	result_token = _character_thread_result_token
-	_character_thread_mutex.unlock()
-	if not done:
-		return
-	_character_thread.wait_to_finish()
-	_character_thread = null
-	_character_thread_done = false
-	_character_thread_error = ""
-	_character_thread_packed = null
-	_character_thread_result_token = -1
-	if result_token != _character_thread_token:
-		_process_pending_character_thread_request()
-		return
-	if err != "":
-		push_error(err)
-		_start_character_interactive(_character_scene_path)
-		_character_thread_pending_scene_path = ""
-		_character_thread_pending_character = ""
-		_update_process_state()
-		return
-	_finish_character_loading_from_packed(packed)
-	_process_pending_character_thread_request()
-	_update_process_state()
-
-
-func _process_pending_character_thread_request() -> void:
-	if _character_thread_pending_scene_path == "":
-		return
-	var pending_scene = _character_thread_pending_scene_path
-	var pending_character = _character_thread_pending_character
-	_character_thread_pending_scene_path = ""
-	_character_thread_pending_character = ""
-	_start_character_thread(pending_character, pending_scene)
-
-
-func _stop_character_thread() -> void:
-	if _character_thread == null:
-		return
-	_character_thread.wait_to_finish()
-	_character_thread = null
-	_character_thread_done = false
-	_character_thread_error = ""
-	_character_thread_packed = null
-	_character_thread_result_token = -1
-	_update_process_state()
-
-
-func _start_character_interactive(scene_path: String) -> void:
-	if scene_path == "":
-		_request_character_loading_hide()
-		return
-	if _character_loader != null:
-		_character_loader = null
-		_character_finish_requested = false
-	var loader = ResourceLoader.load_interactive(scene_path)
-	if loader == null:
-		push_error("Failed to start character load: " + str(scene_path))
-		_request_character_loading_hide()
-		return
-	_character_loader = loader
-	_character_finish_requested = false
-	_update_process_state()
-
-
-func _poll_character_loader() -> void:
-	var now = OS.get_ticks_msec()
-	var interval_msec = int(character_memory_sample_interval * 1000.0)
-	if interval_msec <= 0:
-		interval_msec = 1
-	if now - _character_last_sample_msec >= interval_msec:
-		_character_last_sample_msec = now
-		_sample_character_memory_peak()
-	var err = _character_loader.poll()
-	if err == OK:
-		return
-	if err == ERR_FILE_EOF:
-		if not _character_finish_requested:
-			_character_finish_requested = true
-			call_deferred("_finish_character_loading")
-		return
-	push_error("Character loading failed with error code: " + str(err))
-	_cancel_character_loading()
-
-
-func _finish_character_loading() -> void:
-	_character_finish_requested = false
-	if _character_loader == null:
-		return
-	var packed = _character_loader.get_resource()
-	_character_loader = null
-	_update_process_state()
-	_finish_character_loading_from_packed(packed)
-
-
-func _finish_character_loading_from_packed(packed: PackedScene) -> void:
-	if packed == null or not (packed is PackedScene):
-		push_error("Character resource is not a PackedScene.")
-		_request_character_loading_hide()
-		return
-	_cache_character_scene(_character_scene_path, packed)
-	var instance = packed.instance()
-	if instance == null:
-		push_error("Failed to instance character scene.")
-		_request_character_loading_hide()
-		return
-	_instance_character(instance)
-	_character_load_elapsed_msec = OS.get_ticks_msec() - _character_load_start_msec
-	_sample_character_memory_peak()
-	_log_vita_memory("character_load_done " + current_character)
-	_request_character_loading_hide()
-	_start_character_post_attach_sampling()
-	_start_level_preload()
-	_start_menu_env_load()
 
 
 func _start_level_preload() -> void:
@@ -733,9 +512,7 @@ func _maybe_finish_loading() -> void:
 func _maybe_hide_character_loading() -> void:
 	if not _character_loading_pending_hide:
 		return
-	if _character_loader != null:
-		return
-	if _character_thread != null:
+	if MenuCharacterCache != null and MenuCharacterCache.is_loading():
 		return
 	if OS.get_ticks_msec() < _character_loading_hide_ready_msec:
 		return
@@ -745,8 +522,6 @@ func _maybe_hide_character_loading() -> void:
 
 
 func _begin_loading_from_preload(loader: ResourceInteractiveLoader, scene_path: String, loading_bar: ProgressBar, loading_label: Label) -> void:
-	if _character_loader != null:
-		_cancel_character_loading()
 	_loader = loader
 	_is_loading = true
 	_current_scene_path = scene_path
@@ -762,8 +537,6 @@ func _begin_loading_from_preload(loader: ResourceInteractiveLoader, scene_path: 
 
 
 func _begin_loading_from_packed(packed: PackedScene, scene_path: String, loading_bar: ProgressBar, loading_label: Label) -> void:
-	if _character_loader != null:
-		_cancel_character_loading()
 	_loader = null
 	_pending_packed = packed
 	_is_loading = true
@@ -780,8 +553,6 @@ func _begin_loading_from_packed(packed: PackedScene, scene_path: String, loading
 
 
 func _begin_loading_wait_for_preload(scene_path: String, loading_bar: ProgressBar, loading_label: Label) -> void:
-	if _character_loader != null:
-		_cancel_character_loading()
 	_loader = null
 	_pending_packed = null
 	_is_loading = true
@@ -805,44 +576,6 @@ func _load_level_from_packed(packed: PackedScene) -> void:
 		controller.change_world3d_scene_from_packed(packed)
 	else:
 		var _error = get_tree().change_scene_to(packed)
-
-
-func _resolve_character_scene_path(character_name: String) -> String:
-	if use_menu_lod:
-		var lod_path = CHARACTER_LOD_SCENES.get(character_name, "")
-		if lod_path != "" and ResourceLoader.exists(lod_path):
-			return lod_path
-	return CHARACTER_SCENES.get(character_name, "")
-
-
-func _get_cached_character_scene(scene_path: String) -> PackedScene:
-	if character_cache_limit <= 0:
-		return null
-	var cached = _character_cache.get(scene_path, null)
-	if cached != null and cached is PackedScene:
-		_touch_character_cache(scene_path)
-		return cached as PackedScene
-	return null
-
-
-func _cache_character_scene(scene_path: String, packed: PackedScene) -> void:
-	if character_cache_limit <= 0:
-		return
-	if packed == null:
-		return
-	_character_cache[scene_path] = packed
-	_touch_character_cache(scene_path)
-	while _character_cache_order.size() > character_cache_limit:
-		var evict_path = _character_cache_order[0]
-		_character_cache_order.remove(0)
-		var _erased = _character_cache.erase(evict_path)
-
-
-func _touch_character_cache(scene_path: String) -> void:
-	var index = _character_cache_order.find(scene_path)
-	if index != -1:
-		_character_cache_order.remove(index)
-	_character_cache_order.append(scene_path)
 
 
 func _reset_character_memory_peak() -> void:
@@ -903,21 +636,15 @@ func _print_character_metrics() -> void:
 	var elapsed_ms = _character_load_elapsed_msec
 	if elapsed_ms <= 0:
 		elapsed_ms = OS.get_ticks_msec() - _character_load_start_msec
-	var source = "load"
-	if _character_last_loaded_from_cache:
-		source = "cache"
-	var lod_path = CHARACTER_LOD_SCENES.get(current_character, "")
-	var is_lod = lod_path != "" and _character_scene_path == lod_path
-	var prefix = "[MenuChar]"
-	if OS.get_name() == "Vita":
-		prefix = "[Vita][MenuChar]"
+	var source = "cache" if _character_last_loaded_from_cache else "load"
+	var prefix = "[Vita][MenuChar]" if OS.get_name() == "Vita" else "[MenuChar]"
 	print(prefix, " name=", current_character,
-			" source=", source, " lod=", is_lod,
+			" source=", source,
 			" ms=", elapsed_ms, " scene=", _character_scene_path,
 			" RAM static=", _character_memory_peak_static, "MB  dynamic=", _character_memory_peak_dynamic,
 			"MB  VRAM=", _character_memory_peak_vram, "MB  tex=", _character_memory_peak_tex,
 			"MB  vtx=", _character_memory_peak_vtx, "MB")
-	_push_debug_line(str(prefix, " ", current_character, " src=", source, " lod=", is_lod,
+	_push_debug_line(str(prefix, " ", current_character, " src=", source,
 			" RAM=", _character_memory_peak_static, "/", _character_memory_peak_dynamic,
 			" VRAM=", _character_memory_peak_vram, " tex=", _character_memory_peak_tex))
 
@@ -932,9 +659,8 @@ func _cancel_character_loading() -> void:
 
 
 func _instance_character(instance: Spatial) -> void:
-	var old_instance = null
 	if _character_instance != null and _character_instance.is_inside_tree():
-		old_instance = _character_instance
+		_character_instance.queue_free()
 	_character_instance = instance
 	_character_instance.translation = Vector3.ZERO
 	_character_instance.rotation = Vector3.ZERO
@@ -942,14 +668,12 @@ func _instance_character(instance: Spatial) -> void:
 	if _character_anchor != null:
 		_character_anchor.add_child(_character_instance)
 	_normalize_character_nodes(_character_instance)
-	_apply_character_visibility_range(_character_instance)
 	if menu_character_optimize:
 		_optimize_menu_character(_character_instance)
 	_character_anim_player = _find_anim_player_with_idle(_character_instance)
 	_available_anim_names = _build_preview_anim_list(_character_anim_player)
 	_anim_index = 0
 	_play_preview_anim()
-	_apply_character_transition(old_instance)
 
 
 func _update_loading_bar() -> void:
@@ -1209,14 +933,6 @@ func _optimize_menu_character(root: Node) -> void:
 			stack.append(child)
 
 
-func _apply_character_visibility_range(_root: Node) -> void:
-	# visibility_range_begin / _range_end are Godot 4 properties; they do not
-	# exist in Godot 3.5 GLES2.  The recursive walk was scanning the full
-	# property list of every VisualInstance and always returning false — pure
-	# overhead.  LOD is handled by the LOD system in level_1_env.gd instead.
-	pass
-
-
 func _apply_character_rotation(instance: Spatial, character_name: String) -> void:
 	if instance == null:
 		return
@@ -1226,66 +942,8 @@ func _apply_character_rotation(instance: Spatial, character_name: String) -> voi
 	instance.rotation_degrees = rotation_degrees
 
 
-func _apply_visibility_range_recursive(node: Node, range_begin: float, range_end: float) -> void:
-	if node is VisualInstance:
-		if _has_property(node, "visibility_range_begin"):
-			node.set("visibility_range_begin", range_begin)
-			node.set("visibility_range_end", range_end)
-	for child in node.get_children():
-		_apply_visibility_range_recursive(child, range_begin, range_end)
-
-
-func _has_property(node: Object, prop_name: String) -> bool:
-	for info in node.get_property_list():
-		if info.name == prop_name:
-			return true
-	return false
-
-
 func _sort_character_nodes_by_depth(a: Dictionary, b: Dictionary) -> bool:
 	return int(a.depth) < int(b.depth)
-
-
-func _apply_character_transition(old_instance: Spatial) -> void:
-	if old_instance != null and old_instance.is_inside_tree():
-		if not _pending_character_animate or _pending_character_direction == 0:
-			old_instance.queue_free()
-		else:
-			_transition_old_instance = old_instance
-	if _pending_character_animate and _pending_character_direction != 0:
-		var start_offset = Vector3(CHARACTER_SLIDE_DISTANCE * _pending_character_direction, 0, 0)
-		_character_instance.translation = start_offset
-		_start_character_transition_tween(_pending_character_direction)
-	else:
-		_character_instance.translation = Vector3.ZERO
-		_clear_character_transition_tween()
-
-
-func _start_character_transition_tween(direction: int) -> void:
-	_clear_character_transition_tween()
-	var tween = Tween.new()
-	add_child(tween)
-	_character_transition_tween = tween
-	if _transition_old_instance != null:
-		var old_target = Vector3(-CHARACTER_SLIDE_DISTANCE * direction, 0, 0)
-		tween.interpolate_property(_transition_old_instance, "translation", _transition_old_instance.translation, old_target, CHARACTER_SLIDE_TIME, Tween.TRANS_SINE, Tween.EASE_IN)
-	tween.interpolate_property(_character_instance, "translation", _character_instance.translation, Vector3.ZERO, CHARACTER_SLIDE_TIME, Tween.TRANS_SINE, Tween.EASE_OUT)
-	tween.start()
-	var _connect_err: int = tween.connect("tween_all_completed", self, "_on_character_transition_done")
-
-
-func _clear_character_transition_tween() -> void:
-	if _character_transition_tween != null:
-		var _stop_err: bool = _character_transition_tween.stop_all()
-		_character_transition_tween.queue_free()
-		_character_transition_tween = null
-
-
-func _on_character_transition_done() -> void:
-	if _transition_old_instance != null and _transition_old_instance.is_inside_tree():
-		_transition_old_instance.queue_free()
-	_transition_old_instance = null
-	_clear_character_transition_tween()
 
 
 func _on_AkimboBoy_pressed() -> void:
