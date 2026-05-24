@@ -1,22 +1,19 @@
-[gd_scene load_steps=30 format=2]
+[gd_scene load_steps=23 format=2]
 
 [ext_resource path="res://gui/menu_character.gd" type="Script" id=4]
 [ext_resource path="res://assets/RetroWindowsGUI/Windows_Button_Focus.png" type="Texture" id=5]
 [ext_resource path="res://assets/RetroWindowsGUI/Windows_Button.png" type="Texture" id=6]
 [ext_resource path="res://assets/RetroWindowsGUI/Windows_Button_Pressed.png" type="Texture" id=7]
 [ext_resource path="res://assets/RetroWindowsGUI/Windows_Button_Inactive.png" type="Texture" id=8]
-[ext_resource path="res://gui/RetroWindowsGUI/Window_Base.png" type="Texture" id=9]
 [ext_resource path="res://gui/RetroWindowsGUI/Windows_Toggle_Inactive.png" type="Texture" id=10]
 [ext_resource path="res://gui/RetroWindowsGUI/Flag.png" type="Texture" id=11]
 [ext_resource path="res://assets/RetroWindowsGUI/Window_Base.png" type="Texture" id=12]
 [ext_resource path="res://assets/RetroWindowsGUI/Windows_Progress_Fill.png" type="Texture" id=13]
 [ext_resource path="res://assets/Fonts/Jersey10-Regular.ttf" type="DynamicFontData" id=14]
 
-[sub_resource type="ProceduralSky" id=21]
-
 [sub_resource type="Environment" id=1]
-background_sky = SubResource( 21 )
-background_sky_custom_fov = 18.0
+background_mode = 1
+background_color = Color( 0.05, 0.05, 0.1, 1 )
 ambient_light_color = Color( 1, 1, 1, 1 )
 ambient_light_energy = 0.4
 
@@ -25,10 +22,8 @@ size = 20
 use_filter = true
 font_data = ExtResource( 14 )
 
-[sub_resource type="OccluderShapePolygon" id=38]
-
 [sub_resource type="StyleBoxTexture" id=30]
-texture = ExtResource( 9 )
+texture = ExtResource( 12 )
 region_rect = Rect2( 0, 0, 15, 15 )
 margin_left = 5.0
 margin_right = 5.0
@@ -39,12 +34,9 @@ expand_margin_right = 5.0
 expand_margin_top = 5.0
 expand_margin_bottom = 5.0
 
-[sub_resource type="DynamicFontData" id=23]
-font_path = "res://assets/Fonts/Jersey10-Regular.ttf"
-
 [sub_resource type="DynamicFont" id=24]
 size = 20
-font_data = SubResource( 23 )
+font_data = ExtResource( 14 )
 
 [sub_resource type="StyleBoxTexture" id=25]
 texture = ExtResource( 5 )
@@ -145,13 +137,6 @@ custom_colors/font_color = Color( 0, 0, 0, 1 )
 custom_fonts/font = SubResource( 37 )
 text = "Loading area..."
 
-[node name="BakedLightmap" type="BakedLightmap" parent="."]
-
-[node name="Occluders" type="Spatial" parent="."]
-
-[node name="MenuOccluder" type="Occluder" parent="Occluders"]
-shape = SubResource( 38 )
-
 [node name="SpotLight" type="OmniLight" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.341853, 3.06501, -0.903733 )
 light_color = Color( 0.933333, 0.207843, 0.172549, 1 )
@@ -159,7 +144,7 @@ light_energy = 2.333
 light_specular = 0.5
 omni_range = 5.0
 
-[node name="ClippedCamera" type="ClippedCamera" parent="."]
+[node name="ClippedCamera" type="Camera" parent="."]
 transform = Transform( -0.984178, 0.132189, -0.117982, 0.0407608, 0.816935, 0.575288, 0.17243, 0.561377, -0.809397, -0.300132, 1.53862, -0.657008 )
 current = true
 fov = 106.2

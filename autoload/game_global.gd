@@ -245,13 +245,13 @@ func _apply_vita_perf_to_node(node: Node) -> void:
 	if node == null:
 		return
 	if vita_disable_shadows:
-		if node is Light and _has_property(node, "shadow_enabled"):
-			node.set("shadow_enabled", false)
-		if node is GeometryInstance and _has_property(node, "cast_shadow"):
-			node.set("cast_shadow", GeometryInstance.SHADOW_CASTING_SETTING_OFF)
+		if node is Light:
+			node.shadow_enabled = false
+		if node is GeometryInstance:
+			node.cast_shadow = GeometryInstance.SHADOW_CASTING_SETTING_OFF
 	if vita_force_baked_lights:
-		if node is Light and _has_property(node, "bake_mode"):
-			node.set("bake_mode", Light.BAKE_ALL)
+		if node is Light:
+			node.bake_mode = Light.BAKE_ALL
 	if vita_reduce_particles:
 		if node is Particles or node is CPUParticles:
 			_scale_particles_amount(node)
@@ -262,8 +262,6 @@ func _apply_vita_perf_to_node(node: Node) -> void:
 
 
 func _scale_particles_amount(node: Node) -> void:
-	if not _has_property(node, "amount"):
-		return
 	if node.has_meta("vita_original_amount"):
 		return
 	var original = int(node.get("amount"))
@@ -291,42 +289,26 @@ func _simplify_material(material: Material) -> void:
 		return
 	material.set_meta("vita_simplified", true)
 	if material is SpatialMaterial:
-		var sm = material as SpatialMaterial
-		if _has_property(sm, "normal_enabled"):
-			sm.normal_enabled = false
-		if _has_property(sm, "normal_texture"):
-			sm.normal_texture = null
-		if _has_property(sm, "roughness_texture"):
-			sm.roughness_texture = null
-		if _has_property(sm, "metallic_texture"):
-			sm.metallic_texture = null
-		if _has_property(sm, "detail_enabled"):
-			sm.detail_enabled = false
-		if _has_property(sm, "detail_albedo"):
-			sm.detail_albedo = null
-		if _has_property(sm, "detail_normal"):
-			sm.detail_normal = null
-		if _has_property(sm, "clearcoat_enabled"):
-			sm.clearcoat_enabled = false
-		if _has_property(sm, "subsurf_scatter_enabled"):
-			sm.subsurf_scatter_enabled = false
-		if _has_property(sm, "refraction_enabled"):
-			sm.refraction_enabled = false
-		if _has_property(sm, "params_anisotropy_enabled"):
-			sm.params_anisotropy_enabled = false
+		var sm := material as SpatialMaterial
+		sm.normal_enabled = false
+		sm.normal_texture = null
+		sm.roughness_texture = null
+		sm.metallic_texture = null
+		sm.detail_enabled = false
+		sm.detail_albedo = null
+		sm.detail_normal = null
+		sm.clearcoat_enabled = false
+		sm.subsurf_scatter_enabled = false
+		sm.refraction_enabled = false
+		sm.params_anisotropy_enabled = false
 
-
-func _has_property(node: Object, prop_name: String) -> bool:
-	for info in node.get_property_list():
-		if info.name == prop_name:
-			return true
-	return false
 
 func _ready() -> void:
-	var t := Timer.new()
-	t.wait_time = 2.0
-	t.autostart = true
-	t.one_shot = false
-	add_child(t)
-	var _timer_connect_err = t.connect("timeout", self, "_print_memory")
+	if OS.is_debug_build():
+		var t := Timer.new()
+		t.wait_time = 2.0
+		t.autostart = true
+		t.one_shot = false
+		add_child(t)
+		var _timer_connect_err = t.connect("timeout", self, "_print_memory")
 	_maybe_apply_vita_perf()

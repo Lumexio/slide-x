@@ -8,7 +8,6 @@
 [ext_resource path="res://gui/main_menu.gd" type="Script" id=6]
 [ext_resource path="res://assets/Fonts/Battlenet.ttf" type="DynamicFontData" id=7]
 [ext_resource path="res://gui/RetroWindowsGUI/Angry.png" type="Texture" id=8]
-[ext_resource path="res://gui/RetroWindowsGUI/Window_Base.png" type="Texture" id=9]
 [ext_resource path="res://assets/RetroWindowsGUI/Windows_Progress_Fill.png" type="Texture" id=10]
 [ext_resource path="res://gui/RetroWindowsGUI/Windows_Toggle_Inactive.png" type="Texture" id=11]
 [ext_resource path="res://assets/RetroWindowsGUI/Window_Base.png" type="Texture" id=12]
@@ -65,7 +64,7 @@ shader_param/wireframeColor = Color( 0, 0.502, 0.506, 1 )
 shader_param/width = 0.02
 
 [sub_resource type="StyleBoxTexture" id=18]
-texture = ExtResource( 9 )
+texture = ExtResource( 12 )
 region_rect = Rect2( 0, 0, 15, 15 )
 margin_left = 5.0
 margin_right = 5.0
@@ -162,6 +161,10 @@ size = 18
 use_filter = true
 font_data = ExtResource( 13 )
 
+[sub_resource type="SphereMesh" id=27]
+radial_segments = 13
+rings = 8
+
 [node name="main_menu" type="Spatial"]
 script = ExtResource( 6 )
 
@@ -190,17 +193,13 @@ align = 1
 valign = 1
 uppercase = true
 
-[node name="CSGSphere" type="CSGSphere" parent="WorldEnvironment"]
+[node name="CSGSphere" type="MeshInstance" parent="WorldEnvironment"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -0.585862, 0.213923, 0.312196 )
-operation = 1
-snap = 0.0001
-radial_segments = 13
-rings = 8
-smooth_faces = false
-material = SubResource( 3 )
+mesh = SubResource( 27 )
+material_override = SubResource( 3 )
 script = ExtResource( 1 )
 
-[node name="ClippedCamera" type="ClippedCamera" parent="WorldEnvironment"]
+[node name="ClippedCamera" type="Camera" parent="WorldEnvironment"]
 transform = Transform( 0.900569, -0.178074, 0.396566, -0.120173, 0.774718, 0.620782, -0.417772, -0.606714, 0.676287, 0.812498, 1.1151, 0.922504 )
 near = 0.41
 far = 2.3
@@ -211,8 +210,6 @@ light_energy = 2.778
 light_indirect_energy = 1.296
 light_bake_mode = 2
 shadow_color = Color( 0.909804, 0.839216, 0.839216, 1 )
-
-[node name="BakedLightmap" type="BakedLightmap" parent="."]
 
 [node name="TaskBar" type="Panel" parent="."]
 anchor_top = 1.0

@@ -1,4 +1,4 @@
-extends CSGSphere
+extends MeshInstance
 
 
 # Declare member variables here. Examples:

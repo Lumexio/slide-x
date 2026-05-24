@@ -35,9 +35,6 @@ var _lod_nodes: Array = []
 func _ready() -> void:
 	if use_multimesh_baking:
 		_bake_groups_to_multimesh()
-	# NOTE: visibility_range_begin / _range_end are Godot 4 properties and do
-	# not exist in Godot 3.5 GLES2.  _apply_visibility_range_recursive is a
-	# no-op here; skip it to avoid O(nodes × properties) _has_property scans.
 	_cache_lod_nodes()
 	set_process(true)
 
@@ -48,15 +45,6 @@ func _process(delta: float) -> void:
 		return
 	_lod_timer = 0.0
 	_update_lod_visibility()
-
-
-func _apply_visibility_range_recursive(node: Node, range_begin: float, range_end: float) -> void:
-	if node is VisualInstance:
-		if _has_property(node, "visibility_range_begin"):
-			node.set("visibility_range_begin", range_begin)
-			node.set("visibility_range_end", range_end)
-	for child in node.get_children():
-		_apply_visibility_range_recursive(child, range_begin, range_end)
 
 
 func _cache_lod_nodes() -> void:
@@ -99,13 +87,6 @@ func _get_lod_target() -> Spatial:
 	if players.size() > 0 and players[0] is Spatial:
 		return players[0] as Spatial
 	return null
-
-
-func _has_property(node: Object, prop_name: String) -> bool:
-	for info in node.get_property_list():
-		if info.name == prop_name:
-			return true
-	return false
 
 
 # ---------------------------------------------------------------------------

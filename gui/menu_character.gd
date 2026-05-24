@@ -344,7 +344,6 @@ func _start_character_loading(character_name: String) -> void:
 		_log_vita_memory("character_load_cached " + character_name)
 		_request_character_loading_hide()
 		_start_character_post_attach_sampling()
-		_start_level_preload()
 		_start_menu_env_load()
 		_update_process_state()
 		return
@@ -371,7 +370,6 @@ func _on_character_cache_loaded(packed: PackedScene) -> void:
 	_log_vita_memory("character_load_done " + current_character)
 	_request_character_loading_hide()
 	_start_character_post_attach_sampling()
-	_start_level_preload()
 	_start_menu_env_load()
 
 
